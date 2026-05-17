@@ -1,0 +1,29 @@
+﻿<ui:DialogWindow
+    x:Class="GSharper.Dialogs.ListSymbolDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:local="clr-namespace:GSharper.Dialogs"
+    xmlns:ui="clr-namespace:Microsoft.VisualStudio.PlatformUI;assembly=Microsoft.VisualStudio.Shell.15.0"
+    xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
+    xmlns:controlss="clr-namespace:GSharper.Controls"
+    mc:Ignorable="d"
+    Background="#323232"
+    Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
+    WindowStyle="None" 
+    WindowStartupLocation="Manual"
+    AllowsTransparency="True" 
+    ResizeMode="NoResize"
+    SizeToContent="Height"
+    Height="Auto"
+    Title="SearchDialog" 
+    ShowInTaskbar="False"
+    MaxHeight="450" 
+    Width="670">
+    <Grid>
+        <controlss:ListViewSymbolControl
+            Margin="3" 
+            x:Name="_listViewSymbolControl"  />
+    </Grid>
+</ui:DialogWindow>

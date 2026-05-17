@@ -1,0 +1,65 @@
+﻿<ui:DialogWindow 
+    x:Class="GSharper.Dialogs.ShowChnagesBranchDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:local="clr-namespace:GSharper.Dialogs"
+    xmlns:ui="clr-namespace:Microsoft.VisualStudio.PlatformUI;assembly=Microsoft.VisualStudio.Shell.15.0"
+    xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
+    xmlns:controlss="clr-namespace:GSharper.Controls"
+    mc:Ignorable="d"
+    Background="#323232"
+    Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
+    Title="Разница между локальной версией чайла и версия в бранче"
+    WindowStyle="ToolWindow" 
+    ShowInTaskbar="False">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200"></ColumnDefinition>
+            <ColumnDefinition Width="5"></ColumnDefinition>
+            <ColumnDefinition Width="*"></ColumnDefinition>
+        </Grid.ColumnDefinitions>
+
+        <controlss:ListBranchControl 
+            Grid.Row="1"
+            Grid.Column="0"
+            x:Name="_listBranchControl"/>
+
+        <ProgressBar 
+            Grid.Row="0" 
+            Grid.Column="0"
+            Grid.ColumnSpan="3"
+            IsIndeterminate="True" 
+            Name="_progressBarFilter" 
+            Visibility="Collapsed" />
+        
+        <TextBlock
+            Grid.Row="0"
+            Grid.Column="0"
+            Grid.ColumnSpan="3"
+            TextWrapping="Wrap" 
+            TextAlignment="Left" 
+            Name="_textBlockInfo"
+            Visibility="Collapsed"
+            Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}" />
+
+        <GridSplitter 
+            Grid.Column="1" 
+            Grid.Row="1"
+            Width="5" 
+            HorizontalAlignment="Stretch" 
+            VerticalAlignment="Stretch" 
+            Background="Gray" />
+
+        <controlss:MonacoEditorControl 
+            Grid.Row="1"
+            Grid.Column="2"
+            x:Name="_monacoEditorControl"
+            />
+    </Grid>
+</ui:DialogWindow>

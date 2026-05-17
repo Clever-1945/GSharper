@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup />
+  <ItemGroup>
+    <None Update="Controls\ListBranchControl.xaml">
+      <SubType>Designer</SubType>
+    </None>
+    <None Update="Controls\ListItemSymbolControl.xaml">
+      <SubType>Designer</SubType>
+    </None>
+    <None Update="Controls\ListViewSymbolControl.xaml">
+      <SubType>Designer</SubType>
+    </None>
+    <None Update="Controls\MonacoEditorControl.xaml">
+      <SubType>Designer</SubType>
+    </None>
+    <None Update="Controls\QuickInfoBlockControl.xaml">
+      <SubType>Designer</SubType>
+    </None>
+    <None Update="Controls\TypeSymbolControl.xaml">
+      <SubType>Designer</SubType>
+    </None>
+    <None Update="Dialogs\ListSymbolDialog.xaml">
+      <SubType>Designer</SubType>
+    </None>
+    <None Update="Dialogs\SearchDialog.xaml">
+      <SubType>Designer</SubType>
+    </None>
+    <None Update="Dialogs\ShowChnagesBranchDialog.xaml">
+      <SubType>Designer</SubType>
+    </None>
+    <None Update="Dialogs\ShowHistoryFileDialog.xaml">
+      <SubType>Designer</SubType>
+    </None>
+  </ItemGroup>
+</Project>
