@@ -46,6 +46,21 @@ namespace GSharper.Extensions
                 return "GSharper.Resources.Method.png";
             }
 
+            if (symbol is ILocalSymbol)
+            {
+                return "GSharper.Resources.LocalVariable.png";
+            }
+
+            if (symbol is IPropertySymbol)
+            {
+                return "GSharper.Resources.OverlayProperty.png";
+            }
+
+            if(symbol is IParameterSymbol)
+            {
+                return "GSharper.Resources.FieldSnippet.png";
+            }
+
             return null;
         }
 
@@ -90,14 +105,19 @@ namespace GSharper.Extensions
             }
             else
             {
-                return new Inline[] 
+                if (symbol != null)
                 {
-                    new Run("Неизвестный тип: " + symbol?.Name)
+                    return new Inline[]
                     {
-                        FontWeight = FontWeights.Bold,
-                        Foreground = Assistant.TextFormatting.IdentifierProperties.ForegroundBrush
-                    }
-                };
+                        new Run("Неизвестный тип: " + symbol?.Name)
+                        {
+                            FontWeight = FontWeights.Bold,
+                            Foreground = Assistant.TextFormatting.IdentifierProperties.ForegroundBrush
+                        }
+                    };
+                }
+
+                return Array.Empty<Inline>();
             }
         }
 

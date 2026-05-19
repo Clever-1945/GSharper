@@ -1,25 +1,26 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
     <Nullable>enable</Nullable>
     <LangVersion>14</LangVersion>
-
     <!-- VSIX settings -->
     <VSSDKBuildToolsAutoSetup>true</VSSDKBuildToolsAutoSetup>
     <GeneratePkgDefFile>true</GeneratePkgDefFile>
-	<UseWPF>true</UseWPF>
+    <UseWPF>true</UseWPF>
   </PropertyGroup>
-
   <ItemGroup>
     <None Remove="Resources\Class.png" />
     <None Remove="Resources\copy16.png" />
     <None Remove="Resources\CSFileNode.png" />
     <None Remove="Resources\Enumeration.png" />
+    <None Remove="Resources\FieldSnippet.png" />
     <None Remove="Resources\FinderWindowCommand.png" />
     <None Remove="Resources\Interface.png" />
+    <None Remove="Resources\LocalVariable.png" />
     <None Remove="Resources\Method.png" />
     <None Remove="Resources\monaco-editor.zip" />
+    <None Remove="Resources\OverlayProperty.png" />
     <None Remove="Resources\scripts\index.css" />
     <None Remove="Resources\scripts\index.html" />
     <None Remove="Resources\scripts\index.js" />
@@ -27,16 +28,18 @@
     <None Remove="Resources\StatusWarning.png" />
     <None Remove="Resources\Structure.png" />
   </ItemGroup>
-
   <ItemGroup>
     <EmbeddedResource Include="Resources\Class.png" />
     <EmbeddedResource Include="Resources\copy16.png" />
     <EmbeddedResource Include="Resources\CSFileNode.png" />
     <EmbeddedResource Include="Resources\Enumeration.png" />
+    <EmbeddedResource Include="Resources\FieldSnippet.png" />
     <EmbeddedResource Include="Resources\FinderWindowCommand.png" />
     <EmbeddedResource Include="Resources\Interface.png" />
+    <EmbeddedResource Include="Resources\LocalVariable.png" />
     <EmbeddedResource Include="Resources\Method.png" />
     <EmbeddedResource Include="Resources\monaco-editor.zip" />
+    <EmbeddedResource Include="Resources\OverlayProperty.png" />
     <EmbeddedResource Include="Resources\scripts\index.css" />
     <EmbeddedResource Include="Resources\scripts\index.html" />
     <EmbeddedResource Include="Resources\scripts\index.js" />
@@ -48,7 +51,7 @@
     <ProjectCapability Include="CreateVsixContainer" />
   </ItemGroup>
   <ItemGroup>
-	  <!--<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.3.0" />
+    <!--<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.3.0" />
 	  <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.Common" Version="5.3.0" />
 	  <PackageReference Include="Microsoft.VisualStudio.Editor" Version="17.10.191" />
 	  <PackageReference Include="Microsoft.VisualStudio.Interop" Version="17.10.40170" />
@@ -61,8 +64,7 @@
 		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 	  </PackageReference>
 	  <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3912.50" />-->
-
-	<PackageReference Include="Microsoft.VisualStudio.LanguageServices" Version="4.14.0" />
+    <PackageReference Include="Microsoft.VisualStudio.LanguageServices" Version="4.14.0" />
     <PackageReference Include="Microsoft.VisualStudio.SDK" Version="17.0.31902.203" ExcludeAssets="runtime" />
     <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="18.5.40034">
       <PrivateAssets>all</PrivateAssets>
@@ -71,11 +73,17 @@
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3967.48" />
   </ItemGroup>
   <ItemGroup>
-	  <Reference Include="Microsoft.CSharp" />
-	  <Reference Include="PresentationCore" />
-	  <Reference Include="PresentationFramework" />
-	  <Reference Include="System.Design" />
-	  <Reference Include="System.Windows.Forms" />
-	  <Reference Include="System.Xaml" />
+    <VSCTCompile Include="GSharperPackage.vsct">
+      <ResourceName>Menus.ctmenu</ResourceName>
+      <Generator>VsctGenerator</Generator>
+    </VSCTCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
+    <Reference Include="System.Design" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xaml" />
   </ItemGroup>
 </Project>

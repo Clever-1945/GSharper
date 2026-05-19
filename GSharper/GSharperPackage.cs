@@ -1,4 +1,6 @@
-﻿using Microsoft.VisualStudio.Shell;
+﻿using GSharper.Commands;
+using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
 using System;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -25,6 +27,9 @@ namespace GSharper
     /// </remarks>
     [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
     [Guid(GSharperPackage.PackageGuidString)]
+    [ProvideMenuResource("Menus.ctmenu", 1)]
+    [ProvideAutoLoad(UIContextGuids80.SolutionExists, PackageAutoLoadFlags.BackgroundLoad)]
+    [ProvideToolWindow(typeof(GSharper.Dialogs.QuickInfoBlockDialog), Style = VsDockStyle.Tabbed)]
     public sealed class GSharperPackage : AsyncPackage
     {
         /// <summary>
@@ -46,6 +51,13 @@ namespace GSharper
             // When initialized asynchronously, the current thread may be a background thread at this point.
             // Do any initialization that requires the UI thread after switching to the UI thread.
             await this.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
+
+            await KeyboardShortcutCollectionCommand.InitializeAsync(this);
+            await KeyboardShortcutRestart.InitializeAsync(this);
+            await TriggerSearchCommand.InitializeAsync(this);
+            await ShowHistoryFileCommand.InitializeAsync(this);
+            await ShowChnagesBranchCommand.InitializeAsync(this);
+            await TriggerQuickInfoDialogCommand.InitializeAsync(this);
         }
 
         #endregion

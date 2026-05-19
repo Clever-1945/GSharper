@@ -1,9 +1,10 @@
 ﻿using EnvDTE;
+using GSharper.Extensions;
+using GSharper.Helpers;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Elfie.Model;
 using Microsoft.VisualStudio.Language.Intellisense;
-using GSharper.Extensions;
-using GSharper.Helpers;
+using Microsoft.VisualStudio.Shell;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -40,20 +41,27 @@ namespace GSharper.Controls
         private XElement _commentXml;
         private string _expressionToEvaluate;
         private IAsyncQuickInfoSession _session;
+        private bool _hideOther;
+        private TaskCompletionSource<bool> _taskLoaded = new TaskCompletionSource<bool>();
 
-        public QuickInfoBlockControl(IAsyncQuickInfoSession session, ISymbol symbol, SyntaxNode node)
+        public QuickInfoBlockControl()
         {
             InitializeComponent();
+            this.AddHandler(Hyperlink.ClickEvent, new RoutedEventHandler(OnHyperlinkClicked), true);
+            this.Loaded += OnLoaded;
+        }
+
+        public QuickInfoBlockControl SetData(IAsyncQuickInfoSession session, ISymbol symbol, SyntaxNode node, bool hideOther = true)
+        {
+            _hideOther = hideOther;
             _symbol = symbol;
             _node = node;
             _session = session;
-            _commentStringXml = _symbol.GetDocumentationCommentXml();
+            _commentStringXml = _symbol?.GetDocumentationCommentXml();
             _commentXml = CommentXml();
             _expressionToEvaluate = GetExpressionToEvaluate();
-            this.AddHandler(Hyperlink.ClickEvent, new RoutedEventHandler(OnHyperlinkClicked), true);
-
             Render();
-            this.Loaded += OnLoaded;
+            return this;
         }
 
         private void OnHyperlinkClicked(object sender, RoutedEventArgs e)
@@ -112,7 +120,11 @@ namespace GSharper.Controls
 
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
-            ClearStandart();
+            if (_hideOther)
+            {
+                ClearStandart();
+            }
+            _taskLoaded.TrySetResult(true);
         }
 
         private XElement CommentXml()
@@ -151,10 +163,17 @@ namespace GSharper.Controls
             }
         }
 
-        public void Render()
+        private void Render()
         {
             var _typeSymbol = _symbol as ITypeSymbol;
             var _methodSymbol = _symbol as IMethodSymbol;
+            _textBlockSymbolName.Inlines.Clear();
+            _textBlockSummary.Inlines.Clear();
+            _textBoxError.Visibility = Visibility.Collapsed;
+            _textBoxWarning.Visibility = Visibility.Collapsed;
+            _imageError.Visibility = Visibility.Collapsed;
+            _imageWarning.Visibility = Visibility.Collapsed;
+
             _textBlockSymbolName.Inlines.Add(_symbol, createLink: true);
             _imageSymbolName.Source = ResourceHelper.GetSource(_symbol.GetResourceForName());
 
@@ -168,15 +187,22 @@ namespace GSharper.Controls
             Render(_methodSymbol);
         }
 
-        public string GetSummary()
+        private string GetSummary()
         {
             if (_commentXml == null)
                 return null;
 
-            return _commentXml.Element("summary")?.Value?.Trim();
+            var summary = _commentXml.Element("summary")?.Value?.Trim();
+            var remarks = _commentXml.Element("remarks")?.Value?.Trim();
+
+            return String.Join("\r\n", new string[] 
+            {
+                summary,
+                remarks
+            }.Where(x => !String.IsNullOrWhiteSpace(x)));
         }
 
-        public string GetParams()
+        private string GetParams()
         {
             if (_commentXml == null)
                 return null;
@@ -197,7 +223,7 @@ namespace GSharper.Controls
             return String.Join("\r\n", listName);
         }
 
-        public void ApplyErrorAndWarning()
+        private void ApplyErrorAndWarning()
         {
             var listDiagnostic = _symbol.GetDiagnostics();
             var warnings = listDiagnostic.Where(d => d.Severity == DiagnosticSeverity.Warning).ToArray();
@@ -219,7 +245,7 @@ namespace GSharper.Controls
             }
         }
 
-        public void ApplySummary()
+        private void ApplySummary()
         {
             var summary = GetSummary();
             if(!String.IsNullOrWhiteSpace(summary))
@@ -230,7 +256,7 @@ namespace GSharper.Controls
             }   
         }
 
-        public void ApplyParams()
+        private void ApplyParams()
         {
             var p = GetParams();
             if (!String.IsNullOrWhiteSpace(p))
@@ -241,7 +267,7 @@ namespace GSharper.Controls
             }
         }
 
-        public void ApplyRuntimeValue()
+        private void ApplyRuntimeValue()
         {
             if (String.IsNullOrWhiteSpace(_expressionToEvaluate))
                 return;
@@ -259,13 +285,13 @@ namespace GSharper.Controls
             }
         }
 
-        public void Render(ITypeSymbol _typeSymbol)
+        private void Render(ITypeSymbol _typeSymbol)
         {
             if (_typeSymbol == null)
                 return;
         }
 
-        public void Render(IMethodSymbol _methodSymbol)
+        private void Render(IMethodSymbol _methodSymbol)
         {
             if (_methodSymbol == null)
                 return;
@@ -369,7 +395,7 @@ namespace GSharper.Controls
         private void OnClickContextMenu(object sender, RoutedEventArgs e)
         {
             OnClickContextMenu(sender as MenuItem);
-            _session.DismissAsync();
+            _session?.DismissAsync();
         }
 
         private async void OnClickContextMenu(MenuItem menuItem)

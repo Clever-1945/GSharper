@@ -28,9 +28,7 @@
         </Style>
 
         <Style TargetType="{x:Type ContextMenu}">
-            <!-- Фон меню в редакторе -->
             <Setter Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMenuBorderKey}}"/>
-            <!-- Граница меню в редакторе -->
             <Setter Property="BorderBrush" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMenuBorderKey}}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Padding" Value="1,3"/>
@@ -48,16 +46,13 @@
             </Setter>
         </Style>
 
-        <!-- 2. Стиль для пунктов меню (MenuItem) -->
         <Style TargetType="{x:Type MenuItem}">
-            <!-- Цвет текста в редакторе -->
             <Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarTextSelectedKey}}"/>
             <Setter Property="HorizontalContentAlignment" Value="Left"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type MenuItem}">
-                        <!-- Оболочка строки -->
                         <Border x:Name="CommandRow" 
                             Background="Transparent" 
                             BorderBrush="Transparent" 
@@ -67,13 +62,10 @@
 
                             <Grid MinHeight="24">
                                 <Grid.ColumnDefinitions>
-                                    <!-- Родная ширина колонки иконок в VS -->
                                     <ColumnDefinition Width="28" SharedSizeGroup="MenuItemIconColumnGroup"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
 
-                                <!-- Та самая левая полоса: красится в цвет подложки иконок редактора -->
-                                <!--Background="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMenuIconBackgroundKey}}"-->
                                 <Border x:Name="IconBar" 
                                     Grid.Column="0" 
                                     
@@ -85,7 +77,6 @@
                                                   Width="16" Height="16"/>
                                 </Border>
 
-                                <!-- Контейнер для текста -->
                                 <ContentPresenter Grid.Column="1" 
                                               ContentSource="Header" 
                                               Margin="9,2,16,2" 
@@ -93,16 +84,11 @@
                             </Grid>
                         </Border>
 
-                        <!-- Триггеры изменения состояния (Hover / Наведение) -->
                         <ControlTemplate.Triggers>
-                            <!-- Эффект наведения точно как в редакторе VS -->
                             <Trigger Property="IsHighlighted" Value="True">
-                                <!-- Подсветка строки -->
                                 <Setter TargetName="CommandRow" Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMouseOverBackgroundMiddle2Key}}"/>
                                 <Setter TargetName="CommandRow" Property="BorderBrush" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMouseOverBackgroundMiddle2Key}}"/>
-                                <!-- При наведении полоса иконок становится прозрачной, чтобы плашка была сплошной -->
                                 <Setter TargetName="IconBar" Property="Background" Value="Transparent"/>
-                                <!-- Цвет текста при наведении -->
                                 <Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarTextHoverKey}}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -110,7 +96,6 @@
                 </Setter.Value>
             </Setter>
         </Style>
-
     </UserControl.Resources>
 
     <Grid>

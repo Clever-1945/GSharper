@@ -25,7 +25,7 @@ namespace GSharper.QuickInfo
 
         public UIElement ToUI()
         {
-            return _symbol == null ? null : new QuickInfoBlockControl(_session, _symbol, _node);
+            return _symbol == null ? null : new QuickInfoBlockControl().SetData(_session, _symbol, _node);
         }
     }
 }
