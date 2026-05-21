@@ -1,8 +1,9 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using GSharper.Helpers;
+using GSharper.Models;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Elfie.Model;
 using Microsoft.VisualStudio.PlatformUI;
 using Microsoft.VisualStudio.Shell;
-using GSharper.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -34,6 +35,7 @@ namespace GSharper.Dialogs
             this.Deactivated += OnDeactivated;
             _listViewSymbolControl.OnEscape = () => this.Hide();
             _listViewSymbolControl.OnActive = (s) => this.GoToSymbol();
+            _listViewSymbolControl.SetSearchPattern(new SearchSymbolPattern());
         }
 
         private void OnDeactivated(object sender, EventArgs e)
@@ -43,6 +45,11 @@ namespace GSharper.Dialogs
 
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
+            double screenHeight = SystemParameters.PrimaryScreenHeight;
+            this.Top = screenHeight * 0.25;
+            double screenWidth = SystemParameters.PrimaryScreenWidth;
+            this.Left = (screenWidth - this.Width) / 2;
+
             var symbols = _symbols.Select(x => new SymbolModel(x)).ToArray();
             _listViewSymbolControl.SetSymbols(symbols);
         }

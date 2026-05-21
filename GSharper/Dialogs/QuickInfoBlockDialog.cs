@@ -15,6 +15,7 @@ using System.Linq;
 using System.Net;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using System.Windows.Input;
 
 namespace GSharper.Dialogs
 {
@@ -35,13 +36,14 @@ namespace GSharper.Dialogs
         private QuickInfoBlockControl control = null;
         private IVsMonitorSelection _monitorSelection  = null;
         private uint _cookie;
+        private IWpfTextView _textView = null;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="QuickInfoBlockDialog"/> class.
         /// </summary>
         public QuickInfoBlockDialog() : base(null)
         {
-            this.Caption = "QuickInfoBlockDialog";
+            this.Caption = "Символ под курсором";
             control = new QuickInfoBlockControl();
             this.Content = control;
         }
@@ -49,10 +51,7 @@ namespace GSharper.Dialogs
         public override void OnToolWindowCreated()
         {
             base.OnToolWindowCreated();
-            ThreadHelper.ThrowIfNotOnUIThread();
-
             _monitorSelection = ServiceProvider.GlobalProvider.GetService(typeof(SVsShellMonitorSelection)) as IVsMonitorSelection;
-
 
             if (_monitorSelection != null)
             {
@@ -62,38 +61,36 @@ namespace GSharper.Dialogs
 
         private void OnPositionChanged(object sender, Microsoft.VisualStudio.Text.Editor.CaretPositionChangedEventArgs e)
         {
-            var symbol = GetSymbolUnderCursor();
-            // public QuickInfoBlockControl SetData(IAsyncQuickInfoSession session, ISymbol symbol, SyntaxNode node, bool hideOther = true)
-            control.SetData(null, symbol, null, false);
+            bool movedByMouse = Mouse.LeftButton == MouseButtonState.Pressed || Mouse.RightButton == MouseButtonState.Pressed;
+
+            if (movedByMouse)
+            {
+                var symbol = GetSymbolUnderCursor();
+                control.SetData(null, symbol, null, false);
+            }
         }
 
         private ISymbol GetSymbolUnderCursor()
         {
-            // 1. Получаем текстовое представление редактора
             IWpfTextView textView = GetActiveTextView();
             if (textView == null) 
                 return null;
 
-            // Находим позицию каретки
             SnapshotPoint caretPoint = textView.Caret.Position.BufferPosition;
             int position = caretPoint.Position;
 
-            // 2. Получаем Workspace Visual Studio для доступа к Roslyn
             var componentModel = (IComponentModel)GetService(typeof(SComponentModel));
             var workspace = componentModel.GetService<VisualStudioWorkspace>();
             if (workspace == null) 
                 return null;
 
-            // Находим текущий Roslyn-документ по буферу текста
             Document document = caretPoint.Snapshot.GetOpenDocumentInCurrentContextWithChanges();
             if (document == null) 
                 return null;
 
-            // 3. Получаем семантическую модель документа
             if (!document.TryGetSemanticModel(out var semanticModel))
                 return null;
 
-            // 4. Находим узел синтаксического дерева в позиции курсора
             if (!document.TryGetSyntaxRoot(out var root))
                 return null;
 
@@ -101,43 +98,29 @@ namespace GSharper.Dialogs
             if (node == null)
                 return null;
 
-            // 5. Запрашиваем символ (работает для вызовов методов, типов, переменных)
             SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(node);
-            ISymbol symbol = symbolInfo.Symbol ?? symbolInfo.CandidateSymbols.FirstOrDefault();
-
-            // Если символ не найден напрямую, возможно курсор стоит на самом объявлении (например, class MyClass)
-            if (symbol == null)
-            {
-                symbol = semanticModel.GetDeclaredSymbol(node);
-            }
-
+            ISymbol symbol = symbolInfo.Symbol ?? symbolInfo.CandidateSymbols.FirstOrDefault() ?? semanticModel.GetDeclaredSymbol(node);
             return symbol;
         }
 
         private IWpfTextView GetActiveTextView()
         {
-            // Получаем менеджер текстовых окон
             var textManager = (IVsTextManager)GetService(typeof(SVsTextManager));
             if (textManager == null)
                 return null;
 
-            // Находим активное окно документа
             textManager.GetActiveView(1, null, out IVsTextView textViewCurrent);
             if (textViewCurrent == null) 
                 return null;
 
-            // Адаптируем под интерфейс WPF-редактора через MEF ComponentModel
             var componentModel = (IComponentModel)GetService(typeof(SComponentModel));
             var editorAdapterFactory = componentModel.GetService<IVsEditorAdaptersFactoryService>();
 
             return editorAdapterFactory.GetWpfTextView(textViewCurrent);
         }
 
-        // 1. Отслеживание смены активного окна или документа
         public int OnElementValueChanged(uint elementid, object varOldValue, object varNewValue)
         {
-            ThreadHelper.ThrowIfNotOnUIThread();
-
             if (elementid == (uint)VSConstants.VSSELELEMID.SEID_WindowFrame)
             {
                 if (varNewValue is IVsWindowFrame frame)
@@ -149,6 +132,15 @@ namespace GSharper.Dialogs
                         if (textView != null)
                         {
                             textView.Caret.PositionChanged += OnPositionChanged;
+                            textView.Selection.SelectionChanged += OnSelectionChanged;
+
+                            if (_textView != null)
+                            {
+                                _textView.Caret.PositionChanged -= OnPositionChanged;
+                                _textView.Selection.SelectionChanged -= OnSelectionChanged;
+                            }
+
+                            _textView = textView;
                         }
                     }
                 }
@@ -156,19 +148,23 @@ namespace GSharper.Dialogs
             return VSConstants.S_OK;
         }
 
+        private void OnSelectionChanged(object sender, EventArgs e)
+        {
+            var selection = (ITextSelection)sender;
+            if (!selection.IsEmpty)
+            {
+                string selectedText = selection.StreamSelectionSpan.GetText();
+            }
+        }
+
         // Метод контекста команд (можно оставить пустым)
         public int OnCmdUIContextChanged(uint dwCmdUIContextCookie, int fActive) => VSConstants.S_OK;
 
         public int OnSelectionChanged(IVsHierarchy pHierOld, uint itemidOld, IVsMultiItemSelect pMISOld, ISelectionContainer pSCOld, IVsHierarchy pHierNew, uint itemidNew, IVsMultiItemSelect pMISNew, ISelectionContainer pSCNew)
         {
-            ThreadHelper.ThrowIfNotOnUIThread();
-
-            // Если pHierNew не null, значит фокус на элементе дерева проекта
             if (pHierNew != null)
             {
-                // Можно получить имя выбранного файла/проекта в Solution Explorer
                 pHierNew.GetProperty(itemidNew, (int)__VSHPROPID.VSHPROPID_Name, out object name);
-                System.Diagnostics.Debug.WriteLine($"Выделен элемент в дереве: {name}");
             }
             return VSConstants.S_OK;
         }
@@ -177,11 +173,16 @@ namespace GSharper.Dialogs
         {
             if (disposing)
             {
-                ThreadHelper.ThrowIfNotOnUIThread();
                 if (_monitorSelection != null && _cookie != 0)
                 {
                     _monitorSelection.UnadviseSelectionEvents(_cookie);
                 }
+
+                if (_textView != null)
+                {
+                    _textView.Caret.PositionChanged -= OnPositionChanged;
+                }
+                _textView = null;
             }
             base.Dispose(disposing);
         }

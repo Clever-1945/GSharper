@@ -1,4 +1,6 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using GSharper.Models;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Elfie.Model;
 using Microsoft.VisualStudio.VCProjectEngine;
 using System;
 using System.Collections.Generic;
@@ -55,6 +57,28 @@ namespace GSharper.Extensions
                 collection.Add(item);
             }
             return list;
+        }
+
+        /// <summary>
+        /// Создание многокточий для перехода к списку символов
+        /// </summary>
+        /// <param name="collection"></param>
+        /// <param name="symbols"></param>
+        /// <returns></returns>
+        public static Inline AddDots(this InlineCollection collection, ISymbol[] symbols)
+        {
+            var run = new Run("...")
+            {
+                FontWeight = FontWeights.Bold
+            };
+            var tag = new HyperlinkTagGoToSymbols(symbols);
+            var link = new Hyperlink(run)
+            {
+                TextDecorations = null,
+                Tag = tag
+            };
+            collection.Add(link);
+            return link;
         }
 
         public static Inline[] Add(this InlineCollection collection, ITypeSymbol typeSymbol, bool setNameSpace = true, bool clearValue = true, bool createLink = false)
