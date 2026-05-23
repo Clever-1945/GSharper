@@ -95,6 +95,9 @@ namespace GSharper.Commands
             // комментировать / разкомментировать
             shortcut["GSharper.triggerChangeStateCommentCommand"] = "Текстовый редактор::Ctrl+num /";
 
+            // Изменить регистр слова на противоположный
+            shortcut["GSharper.triggerChangeCaseCommand"] = "Текстовый редактор::Ctrl+Shift+U";
+
             // Следущая ошибка в коде
             shortcut["View.NextError"] = "Текстовый редактор::F12";
 

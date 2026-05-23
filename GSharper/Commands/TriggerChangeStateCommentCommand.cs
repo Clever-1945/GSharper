@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace GSharper.Commands
 {
     /// <summary>
-    /// КОманда ля комментирования и разкомментирования текстового фрагмента
+    /// Команда ля комментирования и разкомментирования текстового фрагмента
     /// </summary>
     public class TriggerChangeStateCommentCommand
     {
@@ -78,7 +78,7 @@ namespace GSharper.Commands
             ITextSnapshot snapshot = textView.TextSnapshot;
             NormalizedSnapshotSpanCollection selection = textView.Selection.SelectedSpans;
 
-            if (selection.Count == 0) 
+            if (selection.Count < 1) 
                 return;
 
             SnapshotSpan selectedSpan = selection.First();

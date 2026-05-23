@@ -59,7 +59,7 @@ namespace GSharper
             await ShowChnagesBranchCommand.InitializeAsync(this);
             await TriggerQuickInfoDialogCommand.InitializeAsync(this);
             await TriggerChangeStateCommentCommand.InitializeAsync(this);
-            
+            await TriggerChangeCaseCommand.InitializeAsync(this);
         }
 
         #endregion

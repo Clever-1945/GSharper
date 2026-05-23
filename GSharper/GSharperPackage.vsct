@@ -95,7 +95,13 @@
 			</Strings>
 		</Button>
 
-		
+		<Button guid="guidGSharperPackageCmdSet" id="TriggerChangeCaseCommandId" priority="0x0106" type="Button">
+			<Parent guid="guidGSharperPackageCmdSet" id="GSharperSubMenu" />
+			<Strings>
+				<ButtonText>Изменить регистр</ButtonText>
+				<LocCanonicalName>.GSharper.triggerChangeCaseCommand</LocCanonicalName>
+			</Strings>
+		</Button>
 
 		<Button guid="guidGSharperPackageContextCmdSet" id="TriggerHistoryFileDialogId" priority="0x0101" type="Button">
 			<Parent guid="guidGSharperPackageContextCmdSet" id="SharperSubContextMenu" />
@@ -142,6 +148,7 @@
 		<IDSymbol name="TriggerSearchCommandId" value="0x0103" />
 		<IDSymbol name="TriggerQuickInfoDialogCommandId" value="0x0104" />
 		<IDSymbol name="TriggerChangeStateCommentCommandId" value="0x0105" />
+		<IDSymbol name="TriggerChangeCaseCommandId" value="0x0106" />
 
 		<IDSymbol name="MyGitGroup" value="0x1150" />
 	  <IDSymbol value="256" name="cmdidQuickInfoBlockDialogCommand" />
