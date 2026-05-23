@@ -154,6 +154,11 @@ namespace GSharper.Dialogs
             if (!selection.IsEmpty)
             {
                 string selectedText = selection.StreamSelectionSpan.GetText();
+                control.SetExpressionSelected(selectedText);
+            }
+            else 
+            {
+                control.SetExpressionSelected(null);
             }
         }
 

@@ -72,8 +72,7 @@ namespace GSharper.Controls
             ApplyImage(_symbol?.Symbol);
 
             ApplyName(_symbol?.ProjectItem);
-            ApplyName(_symbol?.TypeSymbol);
-            ApplyName(_symbol?.MethodSymbol);
+            ApplyName(_symbol?.Symbol);
         }
 
         private void ApplyName(ProjectItem projectItem)
@@ -87,40 +86,15 @@ namespace GSharper.Controls
             }
         }
 
-        private void ApplyName(ITypeSymbol typeSymbol, bool setNameSpace = true, bool clearValue = true)
+        private void ApplyName(ISymbol symbol, bool setNameSpace = true, bool clearValue = true)
         {
-            // ISymbolExtensions
-
-            //var richTextBox = new RichTextBox
-            //{
-            //    IsReadOnly = true,
-            //    Background = Brushes.Transparent,
-            //    BorderThickness = new Thickness(0),
-            //    IsDocumentEnabled = true // Важно для интерактивности
-            //};
-
-            //var paragraph = new Paragraph();
-
-            //// Добавляем разные цвета
-            //paragraph.Inlines.Add(new Run("public ") { Foreground = Brushes.Blue });
-            //paragraph.Inlines.Add(new Run("class ") { Foreground = Brushes.Teal });
-            //paragraph.Inlines.Add(new Run("MyClass { }") { Foreground = Brushes.White });
-
-            //richTextBox.Document = new FlowDocument(paragraph);
-
-            // InlineCollectionExtensions
-
-            if (typeSymbol != null)
+            if (symbol is ITypeSymbol typeSymbol)
             {
-                _textBlockName.Inlines.Add(typeSymbol, setNameSpace, clearValue);
+                _textBlockName.Inlines.Add(typeSymbol, setNameSpace, clearValue, createLink: false);
             }
-        }
-
-        private void ApplyName(IMethodSymbol methodSymbol)
-        {
-            if (methodSymbol != null)
+            else if (symbol != null)
             {
-                _textBlockName.Inlines.Add(methodSymbol);
+                _textBlockName.Inlines.Add(symbol, createLink: false);
             }
         }
 

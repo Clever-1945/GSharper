@@ -4,8 +4,8 @@ using GSharper.Extensions;
 using GSharper.Helpers;
 using GSharper.Models;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.Elfie.Model;
 using Microsoft.VisualStudio.Language.Intellisense;
+using Microsoft.VisualStudio.RpcContracts.DiagnosticManagement;
 using Microsoft.VisualStudio.Shell;
 using System;
 using System.Collections.Generic;
@@ -42,14 +42,18 @@ namespace GSharper.Controls
         private ISymbol _runtimeSymbol;
         private ISymbol[] _baseTypes;
         private ISymbol[] _implementations;
+        private IMethodSymbol[] _overloadingMethods;
+        private Microsoft.CodeAnalysis.Diagnostic[] _diagnostics;
         private SyntaxNode _node;
         private string _commentStringXml;
         private XElement _commentXml;
         private string _expressionToEvaluate;
+        private string _expressionSelected;
         private IAsyncQuickInfoSession _session;
         private bool _hideOther;
         private readonly int _limitCountSymbol = 4;
         private CancellationTokenSource _cancellationTokenSetData = null;
+        private CancellationTokenSource _cancellationTokenExpressionSelected = null;
 
         public QuickInfoBlockControl()
         {
@@ -71,6 +75,30 @@ namespace GSharper.Controls
             return this;
         }
 
+        public QuickInfoBlockControl SetExpressionSelected(string expressionSelected)
+        {
+            _expressionSelected = expressionSelected;
+
+            _cancellationTokenExpressionSelected?.Cancel();
+            _cancellationTokenExpressionSelected = new CancellationTokenSource();
+            ThreadPool.QueueUserWorkItem(async (s) =>
+            {
+                var symbol = GetSymbolByExpression(_expressionSelected);
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+                _textBlockSelectedType.Inlines.Clear();
+                _textBlockSelectedType.Visibility = Visibility.Collapsed;
+                if (symbol != null)
+                {
+                    _textBlockSelectedType.Inlines.AddText("Выдленый тип: ", isBold: true);
+                    _textBlockSelectedType.Inlines.Add(symbol);
+                    _textBlockSelectedType.Visibility = Visibility.Visible;
+                }
+            }, _cancellationTokenExpressionSelected.Token);
+
+            return this;
+        }
+
         private async Task SetDataAsync(IAsyncQuickInfoSession session, ISymbol symbol, SyntaxNode node, bool hideOther = true)
         {
             _hideOther = hideOther;
@@ -83,6 +111,8 @@ namespace GSharper.Controls
             _runtimeSymbol = GetRuntimeSymbol();
             _baseTypes = GetBaseTypes();
             _implementations = GetImplementations();
+            _overloadingMethods = GetOverloadingMethods();
+            _diagnostics = _symbol?.GetDiagnostics() ?? Array.Empty<Microsoft.CodeAnalysis.Diagnostic>();
 
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             Render();
@@ -105,13 +135,14 @@ namespace GSharper.Controls
             }
         }
 
-        private ISymbol GetRuntimeSymbol()
+        private ISymbol GetSymbolByExpression(string expression)
         {
-            if (_expressionToEvaluate == null)
+            if (String.IsNullOrWhiteSpace(expression))
             {
                 return null;
             }
-            string expressionToEvaluate = $"{_expressionToEvaluate}.GetType().Namespace + \".\" + {_expressionToEvaluate}.GetType().Name";
+
+            string expressionToEvaluate = $"{expression}.GetType().Namespace + \".\" + {expression}.GetType().Name";
             try
             {
                 var eval = Assistant.GetDte().Debugger.GetExpression(expressionToEvaluate);
@@ -120,7 +151,7 @@ namespace GSharper.Controls
                     return null;
                 }
 
-                var typeName= eval.Value;
+                var typeName = eval.Value;
                 var index = typeName.LastIndexOf('`');
                 if (index >= 0)
                 {
@@ -133,6 +164,11 @@ namespace GSharper.Controls
             {
                 return null;
             }
+        }
+
+        private ISymbol GetRuntimeSymbol()
+        {
+            return GetSymbolByExpression(_expressionToEvaluate);
         }
 
         private string GetExpressionToEvaluate()
@@ -194,17 +230,12 @@ namespace GSharper.Controls
 
         private void Render()
         {
-            var _typeSymbol = _symbol as ITypeSymbol;
-            var _methodSymbol = _symbol as IMethodSymbol;
             _textBlockSymbolName.Inlines.Clear();
-            _textBlockSummary.Inlines.Clear();
-            _textBoxError.Visibility = Visibility.Collapsed;
-            _textBoxWarning.Visibility = Visibility.Collapsed;
-            _imageError.Visibility = Visibility.Collapsed;
-            _imageWarning.Visibility = Visibility.Collapsed;
-
             _textBlockSymbolName.Inlines.Add(_symbol, createLink: true);
             _imageSymbolName.Source = ResourceHelper.GetSource(_symbol.GetResourceForName());
+
+            _textBlockSelectedType.Inlines.Clear();
+            _textBlockSelectedType.Visibility = Visibility.Collapsed;
 
             ApplySummary();
             ApplyParams();
@@ -212,6 +243,7 @@ namespace GSharper.Controls
             ApplyBaseTypes();
             ApplyImplementations();
             ApplyErrorAndWarning();
+            ApplyOverloadingMethods();
         }
 
         private string GetSummary()
@@ -250,11 +282,56 @@ namespace GSharper.Controls
             return String.Join("\r\n", listName);
         }
 
+        private void ApplyOverloadingMethods()
+        {
+            _textBoxOverloadingMethodLabel.Visibility = Visibility.Collapsed;
+            _textBoxOverloadingMethodLabel.Text = "";
+            _scrollViewerOverloadingMethod.Visibility = Visibility.Collapsed;
+            _textBoxOverloadingMethod.Visibility = Visibility.Collapsed;
+            _textBoxOverloadingMethod.Inlines.Clear();
+
+            if (_overloadingMethods.Length < 1)
+                return;
+
+            _textBoxOverloadingMethodLabel.Visibility = Visibility.Visible;
+            _scrollViewerOverloadingMethod.Visibility = Visibility.Visible;
+            _textBoxOverloadingMethod.Visibility = Visibility.Visible;
+
+            _textBoxOverloadingMethodLabel.Text = "Перегрузки:";
+
+            if (_overloadingMethods.Length > 10)
+            {
+                _textBoxOverloadingMethod.Inlines.AddText("\t");
+                _textBoxOverloadingMethod.Inlines.AddDots(_overloadingMethods);
+                _textBoxOverloadingMethod.Inlines.AddText("\r\n");
+            }
+
+            for (int i = 0; i < _overloadingMethods.Length; i++) 
+            {
+                var overloading = _overloadingMethods[i];
+                if (i > 0)
+                {
+                    _textBoxOverloadingMethod.Inlines.AddText("\r\n");
+                }
+                _textBoxOverloadingMethod.Inlines.AddText("\t");
+                _textBoxOverloadingMethod.Inlines.Add(overloading, createLink: true, clearValue: false);
+            }
+        }
+
         private void ApplyErrorAndWarning()
         {
-            var listDiagnostic = _symbol.GetDiagnostics();
-            var warnings = listDiagnostic.Where(d => d.Severity == DiagnosticSeverity.Warning).ToArray();
-            var errors = listDiagnostic.Where(d => d.Severity == DiagnosticSeverity.Error).ToArray();
+            var warnings = _diagnostics.Where(d => d.Severity == Microsoft.CodeAnalysis.DiagnosticSeverity.Warning).ToArray();
+            var errors = _diagnostics.Where(d => d.Severity == Microsoft.CodeAnalysis.DiagnosticSeverity.Error).ToArray();
+
+            _textBoxError.Visibility = Visibility.Collapsed;
+            _textBoxWarning.Visibility = Visibility.Collapsed;
+
+            _imageError.Visibility = Visibility.Collapsed;
+            _imageError.Source = null;
+
+            _imageWarning.Visibility = Visibility.Collapsed;
+            _imageWarning.Source = null;
+
             if (warnings.Length > 0)
             {
                 _imageWarning.Source = ResourceHelper.GetSource("GSharper.Resources.StatusWarning.png");
@@ -277,10 +354,14 @@ namespace GSharper.Controls
             var summary = GetSummary();
             if(!String.IsNullOrWhiteSpace(summary))
             {
-                _textBlockSummary.Inlines.AddLineIfNotEmpty();
-                _textBlockSummary.Inlines.AddText(summary);
-                _textBlockSummary.Visibility = Visibility.Visible;
-            }   
+                _textBoxSummary.Text = summary;
+                _textBoxSummary.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                _textBoxSummary.Text = "";
+                _textBoxSummary.Visibility = Visibility.Collapsed;
+            }
         }
 
         private void ApplyParams()
@@ -288,20 +369,25 @@ namespace GSharper.Controls
             var p = GetParams();
             if (!String.IsNullOrWhiteSpace(p))
             {
-                _textBlockSummary.Inlines.AddLineIfNotEmpty();
-                _textBlockSummary.Inlines.AddText(p);
-                _textBlockSummary.Visibility = Visibility.Visible;
+                _textBoxParams.Text = p;
+                _textBoxParams.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                _textBoxParams.Visibility = Visibility.Collapsed;
+                _textBoxParams.Text = "";
             }
         }
 
         private void ApplyRuntimeValue()
         {
+            _textBlockRuntimeValue.Visibility = Visibility.Collapsed;
+            _textBlockRuntimeValue.Inlines.Clear();
             if (_runtimeSymbol != null)
             {
-                _textBlockSummary.Visibility = Visibility.Visible;
-                _textBlockSummary.Inlines.AddLineIfNotEmpty();
-                _textBlockSummary.Inlines.AddText("Runtime тип: ");
-                _textBlockSummary.Inlines.Add(_runtimeSymbol, createLink: true);
+                _textBlockRuntimeValue.Visibility = Visibility.Visible;
+                _textBlockRuntimeValue.Inlines.AddText("Runtime тип: ", isBold: true);
+                _textBlockRuntimeValue.Inlines.Add(_runtimeSymbol, createLink: true);
             }
         }
 
@@ -309,11 +395,11 @@ namespace GSharper.Controls
         {
             var typeSymbol = _symbol as ITypeSymbol;
             var methodSymbol = _symbol as IMethodSymbol;
+            var propertySymbol = _symbol as IPropertySymbol;
             if (methodSymbol != null && (methodSymbol.MethodKind == MethodKind.Constructor || methodSymbol.MethodKind == MethodKind.StaticConstructor))
             {
                 typeSymbol = methodSymbol.ContainingType;
             }
-
             if (typeSymbol != null)
             {
                 return typeSymbol.GetBaseSymbols().Where(x => !x.IsKeyword()).ToArray();
@@ -323,70 +409,96 @@ namespace GSharper.Controls
             {
                 return methodSymbol.GetBaseSymbols().ToArray();
             }
+            if (propertySymbol != null)
+            {
+                return propertySymbol.GetBaseSymbols().ToArray();
+            }
 
             return Array.Empty<ISymbol>();
         }
 
         private void ApplyBaseTypes()
         {
-            var types = _baseTypes.Where(x => (x as ITypeSymbol)?.TypeKind != TypeKind.Interface).ToArray();
             var interfaces = _baseTypes.Select(x => x as ITypeSymbol).Where(x => x?.TypeKind == TypeKind.Interface).ToArray();
+            var nointerfaces = _baseTypes.Where(x => (x as ITypeSymbol)?.TypeKind != TypeKind.Interface).ToArray();
 
-            if (types.Length > 0)
+            _textBlockBaseTypes.Inlines.Clear();
+            _textBlockBaseTypes.Visibility = Visibility.Collapsed;
+
+            if (nointerfaces?.Length > 0)
             {
-                _textBlockSummary.Visibility = Visibility.Visible;
-                _textBlockSummary.Inlines.AddLineIfNotEmpty();
-                _textBlockSummary.Inlines.AddText("Базовые типы:", true);
+                _textBlockBaseTypes.Visibility = Visibility.Visible;
+                _textBlockBaseTypes.Inlines.AddLineIfNotEmpty();
+                _textBlockBaseTypes.Inlines.AddText("Базовые типы:", true);
 
-                for (int i = 0; i < types.Length && i < _limitCountSymbol; i++)
+                for (int i = 0; i < nointerfaces.Length && i < _limitCountSymbol; i++)
                 {
-                    _textBlockSummary.Inlines.AddLineIfNotEmpty();
-                    _textBlockSummary.Inlines.AddText("\t");
-                    var typeSymbol = types[i] as ITypeSymbol;
-                    var methodSymbol = types[i] as IMethodSymbol;
+                    var typeSymbol = nointerfaces[i] as ITypeSymbol;
+                    var methodSymbol = nointerfaces[i] as IMethodSymbol;
+                    var propertySymbol = nointerfaces[i] as IPropertySymbol;
+                    _textBlockBaseTypes.Inlines.AddLineIfNotEmpty();
+                    _textBlockBaseTypes.Inlines.AddText("\t");
+
                     if (typeSymbol != null)
                     {
-                        _textBlockSummary.Inlines.Add(typeSymbol, false, false, createLink: true);
+                        _textBlockBaseTypes.Inlines.Add(typeSymbol, false, false, createLink: true);
                     }
                     else if (methodSymbol != null)
                     {
-                        _textBlockSummary.Inlines.Add(methodSymbol, createLink: true, clearValue: false);
+                        _textBlockBaseTypes.Inlines.Add(methodSymbol, createLink: true, clearValue: false);
+                    }
+                    else if (propertySymbol != null)
+                    {
+                        _textBlockBaseTypes.Inlines.Add(propertySymbol, createLink: true, clearValue: false);
                     }
                 }
-                if (types.Length >= _limitCountSymbol)
+
+                if (nointerfaces.Length >= _limitCountSymbol)
                 {
-                    _textBlockSummary.Inlines.AddLineIfNotEmpty();
-                    _textBlockSummary.Inlines.AddText("\t");
-                    _textBlockSummary.Inlines.AddDots(types);
+                    _textBlockBaseTypes.Inlines.AddLineIfNotEmpty();
+                    _textBlockBaseTypes.Inlines.AddText("\t");
+                    _textBlockBaseTypes.Inlines.AddDots(nointerfaces);
                 }
             }
 
             if (interfaces.Length > 0)
             {
-                _textBlockSummary.Visibility = Visibility.Visible;
-                _textBlockSummary.Inlines.AddLineIfNotEmpty();
-                _textBlockSummary.Inlines.AddText("Интерфейсы:", true);
+                _textBlockBaseTypes.Visibility = Visibility.Visible;
+                _textBlockBaseTypes.Inlines.AddLineIfNotEmpty();
+                _textBlockBaseTypes.Inlines.AddText("Интерфейсы:", true);
 
                 for (int i = 0; i < interfaces.Length && i < _limitCountSymbol; i++)
                 {
-                    _textBlockSummary.Inlines.AddLineIfNotEmpty();
-                    _textBlockSummary.Inlines.AddText("\t");
-                    _textBlockSummary.Inlines.Add(interfaces[i], false, false, createLink: true);
+                    _textBlockBaseTypes.Inlines.AddLineIfNotEmpty();
+                    _textBlockBaseTypes.Inlines.AddText("\t");
+                    _textBlockBaseTypes.Inlines.Add(interfaces[i], false, false, createLink: true);
                 }
 
-                if (types.Length >= _limitCountSymbol)
+                if (interfaces.Length >= _limitCountSymbol)
                 {
-                    _textBlockSummary.Inlines.AddLineIfNotEmpty();
-                    _textBlockSummary.Inlines.AddText("\t");
-                    _textBlockSummary.Inlines.AddDots(interfaces);
+                    _textBlockBaseTypes.Inlines.AddLineIfNotEmpty();
+                    _textBlockBaseTypes.Inlines.AddText("\t");
+                    _textBlockBaseTypes.Inlines.AddDots(interfaces);
                 }
             }
+        }
+
+        private IMethodSymbol[] GetOverloadingMethods()
+        {
+            var methodSymbol = _symbol as IMethodSymbol;
+            if (methodSymbol != null)
+            {
+                return methodSymbol.GetOverloadingMethods().ToArray();
+            }
+
+            return Array.Empty<IMethodSymbol>();
         }
 
         private ISymbol[] GetImplementations()
         {
             var typeSymbol = _symbol as ITypeSymbol;
             var methodSymbol = _symbol as IMethodSymbol;
+            var propertySymbol = _symbol as IPropertySymbol;
             if (methodSymbol != null && (methodSymbol.MethodKind == MethodKind.Constructor || methodSymbol.MethodKind == MethodKind.StaticConstructor))
             {
                 typeSymbol = methodSymbol.ContainingType;
@@ -402,52 +514,52 @@ namespace GSharper.Controls
                 return methodSymbol.GetImplementations().ToArray();
             }
 
+            if (propertySymbol != null)
+            {
+                return propertySymbol.GetImplementations().ToArray();
+            }
+
             return Array.Empty<ISymbol>();
         }
 
         private void ApplyImplementations()
         {
-            var methods = _implementations.Select(x => x as IMethodSymbol).Where(x => x != null).ToArray();
-            var types = _implementations.Select(x => x as ITypeSymbol).Where(x => x != null).ToArray();
+            _textBlockImplementations.Visibility = Visibility.Collapsed;
+            _textBlockImplementations.Inlines.Clear();
 
-            if (types.Length > 0)
+            if (_implementations?.Length > 0)
             {
-                _textBlockSummary.Visibility = Visibility.Visible;
-                _textBlockSummary.Inlines.AddLineIfNotEmpty();
-                _textBlockSummary.Inlines.AddText("Реализации:", true);
+                _textBlockImplementations.Visibility = Visibility.Visible;
+                _textBlockImplementations.Inlines.AddLineIfNotEmpty();
+                _textBlockImplementations.Inlines.AddText("Реализации:", true);
 
-                for (int i = 0; i < types.Length && i < _limitCountSymbol; i++)
+                for (int i = 0; i < _implementations.Length && i < _limitCountSymbol; i++)
                 {
-                    _textBlockSummary.Inlines.AddLineIfNotEmpty();
-                    _textBlockSummary.Inlines.AddText("\t");
-                    _textBlockSummary.Inlines.Add(types[i], createLink: true, clearValue: false);
+                    _textBlockImplementations.Inlines.AddLineIfNotEmpty();
+                    _textBlockImplementations.Inlines.AddText("\t");
+                    var typeSymbol = _implementations[i] as ITypeSymbol;
+                    var methodSymbol = _implementations[i] as IMethodSymbol;
+                    var propertySymbol = _implementations[i] as IPropertySymbol;
+
+                    if (typeSymbol != null)
+                    {
+                        _textBlockImplementations.Inlines.Add(typeSymbol, createLink: true, clearValue: false);
+                    }
+                    else if(methodSymbol != null)
+                    {
+                        _textBlockImplementations.Inlines.Add(methodSymbol, createLink: true, clearValue: false);
+                    }
+                    else if (propertySymbol != null)
+                    {
+                        _textBlockImplementations.Inlines.Add(propertySymbol, createLink: true, clearValue: false);
+                    }
                 }
 
-                if (types.Length >= _limitCountSymbol)
+                if (_implementations.Length >= _limitCountSymbol)
                 {
-                    _textBlockSummary.Inlines.AddLineIfNotEmpty();
-                    _textBlockSummary.Inlines.AddText("\t");
-                    _textBlockSummary.Inlines.AddDots(types);
-                }
-            }
-            if (methods.Length > 0)
-            {
-                _textBlockSummary.Visibility = Visibility.Visible;
-                _textBlockSummary.Inlines.AddLineIfNotEmpty();
-                _textBlockSummary.Inlines.AddText("Реализации:", true);
-
-                for (int i = 0; i < methods.Length && i < _limitCountSymbol; i++)
-                {
-                    _textBlockSummary.Inlines.AddLineIfNotEmpty();
-                    _textBlockSummary.Inlines.AddText("\t");
-                    _textBlockSummary.Inlines.Add(methods[i], createLink: true, clearValue: false);
-                }
-
-                if (methods.Length >= _limitCountSymbol)
-                {
-                    _textBlockSummary.Inlines.AddLineIfNotEmpty();
-                    _textBlockSummary.Inlines.AddText("\t");
-                    _textBlockSummary.Inlines.AddDots(methods);
+                    _textBlockImplementations.Inlines.AddLineIfNotEmpty();
+                    _textBlockImplementations.Inlines.AddText("\t");
+                    _textBlockImplementations.Inlines.AddDots(_implementations);
                 }
             }
         }

@@ -66,8 +66,8 @@ namespace GSharper.Extensions
         }
 
         /// <summary> Найти все имплементации символа </summary>
-        /// <param name="typeSymbol"></param>
-        /// <param name="inSolution"></param>
+        /// <param name="methodSymbol"></param>
+        /// <param name="isExternal"></param>
         /// <returns></returns>
         public static IEnumerable<IMethodSymbol> GetImplementations(this IMethodSymbol methodSymbol, bool isExternal)
         {
@@ -106,12 +106,75 @@ namespace GSharper.Extensions
         }
 
         /// <summary> Найти все имплементации символа </summary>
-        /// <param name="typeSymbol"></param>
-        /// <param name="inSolution"></param>
+        /// <param name="methodSymbol"></param>
         /// <returns></returns>
         public static IEnumerable<IMethodSymbol> GetImplementations(this IMethodSymbol methodSymbol)
         {
             return methodSymbol.GetImplementations(false).Concat(methodSymbol.GetImplementations(true));
+        }
+
+        /// <summary> Вернуть тип, которму принадлежит функция. Если функция считается ресширением, то вернуть тип расширения </summary>
+        /// <param name="method"></param>
+        /// <returns></returns>
+        public static ITypeSymbol GetTargetType(this IMethodSymbol method)
+        {
+            if (method.IsExtensionMethod && method.Parameters.Length > 0)
+            {
+                return method.Parameters[0].Type;
+            }
+            return method.ContainingType;
+        }
+
+        /// <summary> Сравнивает две функции и вернуть флаг: две функции считаются перегрузкой ? </summary>
+        /// <param name="method1"></param>
+        /// <param name="method2"></param>
+        /// <returns></returns>
+        private static bool IsMethodsOverloadsWithExtensions(IMethodSymbol method1, IMethodSymbol method2)
+        {
+            if (method1.Name != method2.Name)
+            {
+                return false;
+            }
+
+            if (SymbolEqualityComparer.Default.Equals(method1, method2))
+            {
+                return false;
+            }
+
+            ITypeSymbol targetType1 = GetTargetType(method1);
+            ITypeSymbol targetType2 = GetTargetType(method2);
+
+            if (!SymbolEqualityComparer.Default.Equals(targetType1, targetType2))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary> Вернуть все методы, которые считаются перегрузками </summary>
+        /// <param name="methodSymbol"></param>
+        /// <returns></returns>
+        public static IEnumerable<IMethodSymbol> GetOverloadingMethods(this IMethodSymbol methodSymbol, bool isExternal)
+        {
+            foreach(var symbol in Assistant.GetWorkspace().GetSymbols(isExternal))
+            {
+                if (symbol.Symbol is IMethodSymbol checkMethodSymbol)
+                {
+                    if (IsMethodsOverloadsWithExtensions(checkMethodSymbol, methodSymbol))
+                    {
+                        yield return checkMethodSymbol;
+                    }
+                }
+            }
+        }
+
+        /// <summary> Вернуть все методы, которые считаются перегрузками </summary>
+        /// <param name="methodSymbol"></param>
+        /// <returns></returns>
+        public static IEnumerable<IMethodSymbol> GetOverloadingMethods(this IMethodSymbol methodSymbol)
+        {
+            return methodSymbol.GetOverloadingMethods(false).Concat(methodSymbol.GetOverloadingMethods(true));
         }
     }
 }

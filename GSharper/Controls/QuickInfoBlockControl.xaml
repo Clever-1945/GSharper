@@ -46,6 +46,22 @@
             </Setter>
         </Style>
 
+        <Style TargetType="{x:Type TextBox}">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="IsReadOnly" Value="True"/>
+            <Setter Property="Padding" Value="3"/>
+            <Setter Property="AcceptsReturn" Value="True"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+        </Style>
+
+        <Style TargetType="{x:Type TextBlock}">
+            <Setter Property="Padding" Value="5 2 5 0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+        </Style>
+        
         <Style TargetType="{x:Type MenuItem}">
             <Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarTextSelectedKey}}"/>
             <Setter Property="HorizontalContentAlignment" Value="Left"/>
@@ -140,9 +156,6 @@
             <TextBlock
                 Grid.Row="0"
                 Grid.Column="1"
-                Padding="5 2 5 0"
-                Background="Transparent"
-                Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
                 Name="_textBlockSymbolName"
             ></TextBlock>
 
@@ -209,16 +222,58 @@
 
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <TextBlock
+            <TextBox
                 Grid.Row="0"
-                Grid.Column="0"
-                Padding="3"
-                Background="Transparent"
-                Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
                 Visibility="Collapsed"
-                Name="_textBlockSummary"
+                Name="_textBoxSummary"
+            ></TextBox>
+
+            <TextBox
+                Grid.Row="1"
+                Visibility="Collapsed"
+                Name="_textBoxParams"
+            ></TextBox>
+
+            <TextBlock
+                Grid.Row="2"
+                Name="_textBlockRuntimeValue"
+            ></TextBlock>
+
+            <TextBlock
+                Grid.Row="3"
+                Name="_textBlockSelectedType"
+            ></TextBlock>
+
+            <TextBox
+                Grid.Row="4"
+                Visibility="Collapsed"
+                FontWeight="Bold"
+                Name="_textBoxOverloadingMethodLabel"
+            ></TextBox>
+
+            <ScrollViewer VerticalScrollBarVisibility="Auto" Grid.Row="5" Name="_scrollViewerOverloadingMethod" MaxHeight="50">
+                <TextBlock
+                    Name="_textBoxOverloadingMethod"
+                ></TextBlock>
+            </ScrollViewer>
+
+            <TextBlock
+                Grid.Row="6"
+                Name="_textBlockImplementations"
+            ></TextBlock>
+
+            <TextBlock
+                Grid.Row="7"
+                Name="_textBlockBaseTypes"
             ></TextBlock>
         </Grid>
     </Grid>

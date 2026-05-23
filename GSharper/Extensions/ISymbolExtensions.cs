@@ -1,16 +1,11 @@
-﻿using EnvDTE;
-using Microsoft.CodeAnalysis;
-using Microsoft.VisualStudio.LanguageServices;
+﻿using Microsoft.CodeAnalysis;
 using GSharper.Dialogs;
 using GSharper.Models;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Documents;
 
 namespace GSharper.Extensions
@@ -131,7 +126,14 @@ namespace GSharper.Extensions
                 yield return element;
             }
 
-            yield return new Run(" " + localSymbol.Name)
+            yield return new Run(" ");
+
+            foreach (var element in localSymbol.ContainingType.CreateInline(setNameSpace: false, createLink: createLink))
+            {
+                yield return element;
+            }
+
+            yield return new Run("." + localSymbol.Name)
             {
                 FontWeight = FontWeights.Bold,
                 Foreground = Assistant.TextFormatting.LocalProperties.ForegroundBrush
@@ -148,7 +150,14 @@ namespace GSharper.Extensions
                 yield return element;
             }
 
-            yield return new Run(" " + fieldSymbol.Name)
+            yield return new Run(" ");
+
+            foreach (var element in fieldSymbol.ContainingType.CreateInline(setNameSpace: false, createLink: createLink))
+            {
+                yield return element;
+            }
+
+            yield return new Run("." + fieldSymbol.Name)
             {
                 FontWeight = FontWeights.Bold,
                 Foreground = Assistant.TextFormatting.FieldProperties.ForegroundBrush
@@ -165,7 +174,14 @@ namespace GSharper.Extensions
                 yield return element;
             }
 
-            yield return new Run(" " + propertySymbol.Name)
+            yield return new Run(" ");
+
+            foreach (var element in propertySymbol.ContainingType.CreateInline(setNameSpace: false, createLink: createLink))
+            {
+                yield return element;
+            }
+
+            yield return new Run("." + propertySymbol.Name)
             {
                 FontWeight = FontWeights.Bold,
                 Foreground = Assistant.TextFormatting.PropertyProperties.ForegroundBrush
@@ -182,7 +198,14 @@ namespace GSharper.Extensions
                 yield return element;
             }
 
-            yield return new Run(" " + parameterSymbol.Name)
+            yield return new Run(" ");
+
+            foreach (var element in parameterSymbol.ContainingType.CreateInline(setNameSpace: false, createLink: createLink))
+            {
+                yield return element;
+            }
+
+            yield return new Run("." + parameterSymbol.Name)
             {
                 FontWeight = FontWeights.Bold,
                 Foreground = Assistant.TextFormatting.ParameterProperties.ForegroundBrush

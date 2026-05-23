@@ -62,7 +62,6 @@ namespace GSharper.Extensions
             }
         }
 
-
         /// <summary>
         /// Базовый метод для поиска символов
         /// </summary>

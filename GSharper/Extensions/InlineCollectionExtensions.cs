@@ -95,6 +95,47 @@ namespace GSharper.Extensions
             return list;
         }
 
+        public static Inline[] Add(this InlineCollection collection, IPropertySymbol propertySymbol, bool createLink = false, bool clearValue = true)
+        {
+            if (clearValue)
+            {
+                collection.Clear();
+            }
+            var list = propertySymbol.CreateInline(createLink: createLink).ToArray();
+            foreach (var item in list)
+            {
+                collection.Add(item);
+            }
+            return list;
+        }
+
+        public static Inline[] Add(this InlineCollection collection, IFieldSymbol fieldSymbol, bool createLink = false, bool clearValue = true)
+        {
+            if (clearValue)
+            {
+                collection.Clear();
+            }
+            var list = fieldSymbol.CreateInline(createLink: createLink).ToArray();
+            foreach (var item in list)
+            {
+                collection.Add(item);
+            }
+            return list;
+        }
+
+        public static Inline[] Add(this InlineCollection collection, ILocalSymbol localSymbol, bool createLink = false, bool clearValue = true)
+        {
+            if (clearValue)
+            {
+                collection.Clear();
+            }
+            var list = localSymbol.CreateInline(createLink: createLink).ToArray();
+            foreach (var item in list)
+            {
+                collection.Add(item);
+            }
+            return list;
+        }
 
         public static Inline[] Add(this InlineCollection collection, IMethodSymbol methodSymbol, bool createLink = false, bool clearValue = true)
         {
