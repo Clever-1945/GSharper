@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace GSharper.Helpers
 {
@@ -73,7 +72,7 @@ namespace GSharper.Helpers
                 process.WaitForExit();
 
                 if (process.ExitCode != 0)
-                    throw new Exception($"Git error: {error}");
+                    return "";
 
                 return output.Trim();
             }

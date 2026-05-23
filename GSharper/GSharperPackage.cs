@@ -58,6 +58,8 @@ namespace GSharper
             await ShowHistoryFileCommand.InitializeAsync(this);
             await ShowChnagesBranchCommand.InitializeAsync(this);
             await TriggerQuickInfoDialogCommand.InitializeAsync(this);
+            await TriggerChangeStateCommentCommand.InitializeAsync(this);
+            
         }
 
         #endregion

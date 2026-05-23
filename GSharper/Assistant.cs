@@ -1,10 +1,13 @@
 ﻿using EnvDTE;
 using EnvDTE80;
 using Microsoft.VisualStudio.ComponentModelHost;
+using Microsoft.VisualStudio.Editor;
 using Microsoft.VisualStudio.LanguageServices;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text.Classification;
+using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Formatting;
+using Microsoft.VisualStudio.TextManager.Interop;
 using System;
 using System.IO;
 using System.IO.Compression;
@@ -119,6 +122,22 @@ namespace GSharper
         public static T GetComponentService<T>() where T : class
         {
             return GetComponentModel().GetService<T>();
+        }
+
+        public static IWpfTextView GetActiveTextView()
+        {
+            var textManager = GetGlobalService<IVsTextManager, SVsTextManager>();
+            if (textManager == null)
+                return null;
+
+            textManager.GetActiveView(1, null, out IVsTextView textViewCurrent);
+            if (textViewCurrent == null)
+                return null;
+
+            var componentModel = GetComponentModel();
+            var editorAdapterFactory = componentModel.GetService<IVsEditorAdaptersFactoryService>();
+
+            return editorAdapterFactory.GetWpfTextView(textViewCurrent);
         }
     }
 

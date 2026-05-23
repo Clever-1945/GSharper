@@ -72,7 +72,7 @@ namespace GSharper.Dialogs
 
         private ISymbol GetSymbolUnderCursor()
         {
-            IWpfTextView textView = GetActiveTextView();
+            IWpfTextView textView = Assistant.GetActiveTextView();
             if (textView == null) 
                 return null;
 
@@ -103,22 +103,6 @@ namespace GSharper.Dialogs
             return symbol;
         }
 
-        private IWpfTextView GetActiveTextView()
-        {
-            var textManager = (IVsTextManager)GetService(typeof(SVsTextManager));
-            if (textManager == null)
-                return null;
-
-            textManager.GetActiveView(1, null, out IVsTextView textViewCurrent);
-            if (textViewCurrent == null) 
-                return null;
-
-            var componentModel = (IComponentModel)GetService(typeof(SComponentModel));
-            var editorAdapterFactory = componentModel.GetService<IVsEditorAdaptersFactoryService>();
-
-            return editorAdapterFactory.GetWpfTextView(textViewCurrent);
-        }
-
         public int OnElementValueChanged(uint elementid, object varOldValue, object varNewValue)
         {
             if (elementid == (uint)VSConstants.VSSELELEMID.SEID_WindowFrame)
@@ -128,7 +112,7 @@ namespace GSharper.Dialogs
                     frame.GetProperty((int)__VSFPROPID.VSFPROPID_pszMkDocument, out object pathObj);
                     if (pathObj is string filePath)
                     {
-                        var textView = GetActiveTextView();
+                        var textView = Assistant.GetActiveTextView();
                         if (textView != null)
                         {
                             textView.Caret.PositionChanged += OnPositionChanged;

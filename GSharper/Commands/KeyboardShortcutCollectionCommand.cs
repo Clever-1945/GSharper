@@ -75,17 +75,41 @@ namespace GSharper.Commands
         private Dictionary<string, string> GetShortcuts()
         {
             var shortcut = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            shortcut["View.NavigateForward"] = "Ctrl+Alt+Стрелка вправо";
-            shortcut["View.NavigateBackward"] = "Ctrl+Alt+Стрелка влево";
-            shortcut["Debug.QuickWatch"] = "Shift+F9";
-            shortcut["Edit.QuickInfo"] = "Ctrl+Q";
-            shortcut["Edit.FormatSelection"] = "Ctrl+Alt+L";
-            shortcut["Edit.GoToImplementation"] = "Ctrl+Alt+Shift+B";
-            //
+            shortcut["View.NavigateForward"] = "Текстовый редактор::Ctrl+Alt+Right Arrow";
+            shortcut["View.NavigateBackward"] = "Текстовый редактор::Ctrl+Alt+Left Arrow";
+            shortcut["Debug.QuickWatch"] = "Текстовый редактор::Shift+F9";
+            shortcut["Edit.QuickInfo"] = "Текстовый редактор::Ctrl+Q";
 
-            shortcut["Sharper.triggerSearchDialog"] = "Ctrl+N";
-            
-            // Edit.FormatSelection
+            // Форматировать выбранный участок кода
+            shortcut["Edit.FormatSelection"] = "Текстовый редактор::Ctrl+Alt+L";
+
+            // Перейти к реализации
+            shortcut["Edit.GoToImplementation"] = "Текстовый редактор::Ctrl+Alt+Shift+B";
+
+            // перейти к базовому
+            shortcut["Edit.GoToBase"] = "Текстовый редактор::Ctrl+U";
+
+            // Показать окно поиском типов
+            shortcut["GSharper.triggerSearchDialog"] = "Текстовый редактор::Ctrl+N";
+
+            // комментировать / разкомментировать
+            shortcut["GSharper.triggerChangeStateCommentCommand"] = "Текстовый редактор::Ctrl+num /";
+
+            // Следущая ошибка в коде
+            shortcut["View.NextError"] = "Текстовый редактор::F12";
+
+            // Шаг с обходом
+            shortcut["Debug.StepOver"] = "Везде::F10";
+
+            // Шаг с заходом
+            shortcut["Debug.StepInto"] = "Везде::F11";
+
+            // Шаг с выходом
+            shortcut["Debug.StepOut"] = "Везде::Shift+F11";
+
+            // глобальный поиск текста
+            shortcut["Edit.GoToText"] = "Везде::Ctrl+Shift+F";
+
             return shortcut;
         }
 
@@ -134,7 +158,12 @@ namespace GSharper.Commands
             var shortcuts = GetShortcuts();
             System.Windows.MessageBox.Show("Перед примененией комбинаций клавиш обязательно переключите раскладку на английскую!");
 
-            DeleteShortcuts(shortcuts.Select(x => x.Value).ToArray(), commands);
+            var shortcutNames = shortcuts.Select(x => 
+            {
+                var index = x.Value.IndexOf("::");
+                return index < 0 ? x.Value : x.Value.Substring(index + 2);
+            }).ToArray();
+            DeleteShortcuts(shortcutNames, commands);
 
             foreach (Command cmd in commands)
             {
@@ -145,10 +174,7 @@ namespace GSharper.Commands
                 var shortcut = shortcuts.GetValueOrDefault(cmd.LocalizedName) ?? shortcuts.GetValueOrDefault(cmd.Name);
                 if (shortcut != null)
                 {
-                    shortcut = shortcut.Replace("Стрелка вправо", "Right Arrow");
-                    shortcut = shortcut.Replace("Стрелка влево", "Left Arrow");
-
-                    cmd.Bindings = new object[] { $"Везде::{shortcut}" };
+                    cmd.Bindings = new object[] { $"{shortcut}" };
                 }
             }
         }
