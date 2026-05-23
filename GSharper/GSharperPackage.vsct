@@ -40,7 +40,7 @@
 			  </Strings>
 		  </Menu>
 
-		  <Menu guid="guidSharperPackageCmdSet" id="SharperContextMenu" priority="0x0100" type="Menu">
+		  <Menu guid="guidGSharperPackageContextCmdSet" id="SharperContextMenu" priority="0x0100" type="Menu">
 			  <Parent guid="guidSHLMainMenu" id="IDG_VS_CODEWIN_ADVANCED" />
 			  <Strings>
 				  <ButtonText>GSharper</ButtonText>
@@ -53,8 +53,8 @@
 			  <Parent guid="guidGSharperPackageCmdSet" id="GSharperCustomMenu" />
 		  </Group>
 
-		  <Group guid="guidSharperPackageCmdSet" id="SharperSubContextMenu" priority="0x0000">
-			  <Parent guid="guidSharperPackageCmdSet" id="SharperContextMenu" />
+		  <Group guid="guidGSharperPackageContextCmdSet" id="SharperSubContextMenu" priority="0x0000">
+			  <Parent guid="guidGSharperPackageContextCmdSet" id="SharperContextMenu" />
 		  </Group>
 	  </Groups>
 	 
@@ -87,15 +87,15 @@
 			</Strings>
 		</Button>
 
-		<Button guid="guidSharperPackageCmdSet" id="TriggerHistoryFileDialogId" priority="0x0101" type="Button">
-			<Parent guid="guidSharperPackageCmdSet" id="SharperSubContextMenu" />
+		<Button guid="guidGSharperPackageContextCmdSet" id="TriggerHistoryFileDialogId" priority="0x0101" type="Button">
+			<Parent guid="guidGSharperPackageContextCmdSet" id="SharperSubContextMenu" />
 			<Strings>
 				<ButtonText>Показать историю изменений...</ButtonText>
 				<LocCanonicalName>.GSharper.triggerHistoryFileDialog</LocCanonicalName>
 			</Strings>
 		</Button>
-		<Button guid="guidSharperPackageCmdSet" id="TriggerShowChnagesBranchId" priority="0x0102" type="Button">
-			<Parent guid="guidSharperPackageCmdSet" id="SharperSubContextMenu" />
+		<Button guid="guidGSharperPackageContextCmdSet" id="TriggerShowChnagesBranchId" priority="0x0102" type="Button">
+			<Parent guid="guidGSharperPackageContextCmdSet" id="SharperSubContextMenu" />
 			<Strings>
 				<ButtonText>Сравнить с бранчем...</ButtonText>
 				<LocCanonicalName>.GSharper.triggerShowChnagesBranch</LocCanonicalName>
@@ -136,7 +136,7 @@
 	  <IDSymbol value="256" name="cmdidQuickInfoBlockDialogCommand" />
     </GuidSymbol>
 
-	  <GuidSymbol name="guidSharperPackageCmdSet" value="{545A271A-937C-4DAA-951F-CF155A82C3FA}">
+	  <GuidSymbol name="guidGSharperPackageContextCmdSet" value="{545A271A-937C-4DAA-951F-CF155A82C3FA}">
 		  <IDSymbol name="SharperSubContextMenu" value="0x1000" />
 		  <IDSymbol name="SharperContextMenu" value="0x1010" />
 		  <IDSymbol name="TriggerHistoryFileDialogId" value="0x0101" />
