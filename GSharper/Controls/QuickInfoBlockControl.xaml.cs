@@ -1,4 +1,5 @@
 ﻿using EnvDTE;
+using GSharper.Assistants;
 using GSharper.Dialogs;
 using GSharper.Extensions;
 using GSharper.Helpers;

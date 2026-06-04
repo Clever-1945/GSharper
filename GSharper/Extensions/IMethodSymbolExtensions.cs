@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using GSharper.Assistants;
+using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
 using System.Linq;

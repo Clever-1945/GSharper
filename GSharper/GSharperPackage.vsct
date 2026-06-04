@@ -103,6 +103,22 @@
 			</Strings>
 		</Button>
 
+		<Button guid="guidGSharperPackageCmdSet" id="TriggerRebuildProjectsCommandId" priority="0x0107" type="Button">
+			<Parent guid="guidGSharperPackageCmdSet" id="GSharperSubMenu" />
+			<Strings>
+				<ButtonText>Пересобрать проекты</ButtonText>
+				<LocCanonicalName>.GSharper.triggerRebuildProjectsCommand</LocCanonicalName>
+			</Strings>
+		</Button>
+
+		<Button guid="guidGSharperPackageCmdSet" id="TriggerDecompilationPackagesCommandId" priority="0x0108" type="Button">
+			<Parent guid="guidGSharperPackageCmdSet" id="GSharperSubMenu" />
+			<Strings>
+				<ButtonText>Декомпилировать пакеты</ButtonText>
+				<LocCanonicalName>.GSharper.triggerDecompilationPackagesCommand</LocCanonicalName>
+			</Strings>
+		</Button>
+
 		<Button guid="guidGSharperPackageContextCmdSet" id="TriggerHistoryFileDialogId" priority="0x0101" type="Button">
 			<Parent guid="guidGSharperPackageContextCmdSet" id="SharperSubContextMenu" />
 			<Strings>
@@ -149,6 +165,8 @@
 		<IDSymbol name="TriggerQuickInfoDialogCommandId" value="0x0104" />
 		<IDSymbol name="TriggerChangeStateCommentCommandId" value="0x0105" />
 		<IDSymbol name="TriggerChangeCaseCommandId" value="0x0106" />
+		<IDSymbol name="TriggerRebuildProjectsCommandId" value="0x0107" />
+		<IDSymbol name="TriggerDecompilationPackagesCommandId" value="0x0108" />
 
 		<IDSymbol name="MyGitGroup" value="0x1150" />
 	  <IDSymbol value="256" name="cmdidQuickInfoBlockDialogCommand" />

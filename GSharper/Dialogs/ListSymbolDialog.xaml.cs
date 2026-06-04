@@ -1,4 +1,5 @@
-﻿using GSharper.Helpers;
+﻿using GSharper.Assistants;
+using GSharper.Helpers;
 using GSharper.Models;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Elfie.Model;

@@ -1,8 +1,12 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using GSharper.Assistants;
 using GSharper.Dialogs;
 using GSharper.Models;
+using Microsoft.CodeAnalysis;
+using Microsoft.VisualStudio.ComponentModelHost;
+using Microsoft.VisualStudio.Shell;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
@@ -73,6 +77,7 @@ namespace GSharper.Extensions
             var _propertySymbol = symbol as IPropertySymbol;
             var _fieldSymbol = symbol as IFieldSymbol;
             var _localSymbol = symbol as ILocalSymbol;
+            var eventSymbol = symbol as IEventSymbol;
 
             if (_typeSymbol != null)
             {
@@ -98,16 +103,20 @@ namespace GSharper.Extensions
             {
                 return _localSymbol.CreateInline(createLink: createLink);
             }
+            else if (eventSymbol != null)
+            {
+                return eventSymbol.CreateInline(createLink: createLink);
+            }
             else
             {
                 if (symbol != null)
                 {
                     return new Inline[]
                     {
-                        new Run("Неизвестный тип: " + symbol?.Name)
+                        new Run("Неизвестный тип: " + symbol?.GetType()?.Name + " " + symbol?.Name)
                         {
                             FontWeight = FontWeights.Bold,
-                            Foreground = Assistant.TextFormatting.IdentifierProperties.ForegroundBrush
+                            Foreground = Assistant.TextFormatting.Value.IdentifierProperties.ForegroundBrush
                         }
                     };
                 }
@@ -136,8 +145,32 @@ namespace GSharper.Extensions
             yield return new Run("." + localSymbol.Name)
             {
                 FontWeight = FontWeights.Bold,
-                Foreground = Assistant.TextFormatting.LocalProperties.ForegroundBrush
+                Foreground = Assistant.TextFormatting.Value.LocalProperties.ForegroundBrush
             }.CreateLink(localSymbol, createLink);
+        }
+
+        public static IEnumerable<Inline> CreateInline(this IEventSymbol eventSymbol, bool createLink = false)
+        {
+            if (eventSymbol == null)
+                yield break;
+
+            foreach (var element in eventSymbol.Type.CreateInline(setNameSpace: false, createLink: createLink))
+            {
+                yield return element;
+            }
+
+            yield return new Run(" ");
+
+            foreach (var element in eventSymbol.ContainingType.CreateInline(setNameSpace: false, createLink: createLink))
+            {
+                yield return element;
+            }
+
+            yield return new Run("." + eventSymbol.Name)
+            {
+                FontWeight = FontWeights.Bold,
+                Foreground = Assistant.TextFormatting.Value.FieldProperties.ForegroundBrush
+            }.CreateLink(eventSymbol, createLink);
         }
 
         public static IEnumerable<Inline> CreateInline(this IFieldSymbol fieldSymbol, bool createLink = false)
@@ -160,7 +193,7 @@ namespace GSharper.Extensions
             yield return new Run("." + fieldSymbol.Name)
             {
                 FontWeight = FontWeights.Bold,
-                Foreground = Assistant.TextFormatting.FieldProperties.ForegroundBrush
+                Foreground = Assistant.TextFormatting.Value.FieldProperties.ForegroundBrush
             }.CreateLink(fieldSymbol, createLink);
         }
 
@@ -184,7 +217,7 @@ namespace GSharper.Extensions
             yield return new Run("." + propertySymbol.Name)
             {
                 FontWeight = FontWeights.Bold,
-                Foreground = Assistant.TextFormatting.PropertyProperties.ForegroundBrush
+                Foreground = Assistant.TextFormatting.Value.PropertyProperties.ForegroundBrush
             }.CreateLink(propertySymbol, createLink);
         }
 
@@ -208,7 +241,7 @@ namespace GSharper.Extensions
             yield return new Run("." + parameterSymbol.Name)
             {
                 FontWeight = FontWeights.Bold,
-                Foreground = Assistant.TextFormatting.ParameterProperties.ForegroundBrush
+                Foreground = Assistant.TextFormatting.Value.ParameterProperties.ForegroundBrush
             }.CreateLink(parameterSymbol, createLink);
         }
 
@@ -221,7 +254,7 @@ namespace GSharper.Extensions
                 yield return new Run("<")
                 {
                     FontWeight = FontWeights.Bold,
-                    Foreground = Assistant.TextFormatting.IdentifierProperties.ForegroundBrush
+                    Foreground = Assistant.TextFormatting.Value.IdentifierProperties.ForegroundBrush
                 };
 
                 for (int i = 0; i < typeArguments.Length; i++)
@@ -237,7 +270,7 @@ namespace GSharper.Extensions
                         yield return new Run(", ")
                         {
                             FontWeight = FontWeights.Bold,
-                            Foreground = Assistant.TextFormatting.IdentifierProperties.ForegroundBrush
+                            Foreground = Assistant.TextFormatting.Value.IdentifierProperties.ForegroundBrush
                         };
                     }
                 }
@@ -245,7 +278,7 @@ namespace GSharper.Extensions
                 yield return new Run(">")
                 {
                     FontWeight = FontWeights.Bold,
-                    Foreground = Assistant.TextFormatting.IdentifierProperties.ForegroundBrush
+                    Foreground = Assistant.TextFormatting.Value.IdentifierProperties.ForegroundBrush
                 };
             }
         }
@@ -276,7 +309,7 @@ namespace GSharper.Extensions
                 yield return new Run(typeSymbolName)
                 {
                     FontWeight = FontWeights.Bold,
-                    Foreground = Assistant.TextFormatting.InterfaceProperties.ForegroundBrush
+                    Foreground = Assistant.TextFormatting.Value.InterfaceProperties.ForegroundBrush
                 }.CreateLink(typeSymbol, createLink);
 
                 foreach (var e in typeSymbol.CreateGenericInline(setNameSpace: setNameSpace, createLink: createLink))
@@ -289,7 +322,7 @@ namespace GSharper.Extensions
                 yield return new Run(typeSymbolName)
                 {
                     FontWeight = FontWeights.Bold,
-                    Foreground = Assistant.TextFormatting.EnumProperties.ForegroundBrush
+                    Foreground = Assistant.TextFormatting.Value.EnumProperties.ForegroundBrush
                 }.CreateLink(typeSymbol, createLink);
             }
             else if (typeSymbol.IsKeyword())
@@ -297,7 +330,7 @@ namespace GSharper.Extensions
                 yield return new Run(typeSymbolName)
                 {
                     FontWeight = FontWeights.Bold,
-                    Foreground = Assistant.TextFormatting.KeywordProperties.ForegroundBrush
+                    Foreground = Assistant.TextFormatting.Value.KeywordProperties.ForegroundBrush
                 }.CreateLink(typeSymbol, createLink);
 
                 foreach (var e in typeSymbol.CreateGenericInline(setNameSpace: setNameSpace, createLink: createLink))
@@ -310,7 +343,7 @@ namespace GSharper.Extensions
                 yield return new Run(typeSymbolName)
                 {
                     FontWeight = FontWeights.Bold,
-                    Foreground = Assistant.TextFormatting.ClassProperties.ForegroundBrush
+                    Foreground = Assistant.TextFormatting.Value.ClassProperties.ForegroundBrush
                 }.CreateLink(typeSymbol, createLink);
 
                 foreach (var e in typeSymbol.CreateGenericInline(setNameSpace: setNameSpace, createLink: createLink))
@@ -323,7 +356,7 @@ namespace GSharper.Extensions
                 yield return new Run(typeSymbolName)
                 {
                     FontWeight = FontWeights.Bold,
-                    Foreground = Assistant.TextFormatting.ClassProperties.ForegroundBrush,
+                    Foreground = Assistant.TextFormatting.Value.ClassProperties.ForegroundBrush,
                 }.CreateLink(typeSymbol, createLink);
 
                 foreach (var e in typeSymbol.CreateGenericInline(setNameSpace: setNameSpace, createLink: createLink))
@@ -336,7 +369,7 @@ namespace GSharper.Extensions
                 yield return new Run(typeSymbolName)
                 {
                     FontWeight = FontWeights.Bold,
-                    Foreground = Assistant.TextFormatting.DelegateProperties.ForegroundBrush,
+                    Foreground = Assistant.TextFormatting.Value.DelegateProperties.ForegroundBrush,
                 }.CreateLink(typeSymbol, createLink);
 
                 foreach (var e in typeSymbol.CreateGenericInline(setNameSpace: setNameSpace, createLink: createLink))
@@ -356,7 +389,7 @@ namespace GSharper.Extensions
                     yield return new Run("[]")
                     {
                         FontWeight = FontWeights.Bold,
-                        Foreground = Assistant.TextFormatting.IdentifierProperties.ForegroundBrush
+                        Foreground = Assistant.TextFormatting.Value.IdentifierProperties.ForegroundBrush
                     };
 
                     foreach (var e in typeSymbol.CreateGenericInline(setNameSpace: setNameSpace, createLink: createLink))
@@ -369,7 +402,7 @@ namespace GSharper.Extensions
                     yield return new Run(typeSymbolName)
                     {
                         FontWeight = FontWeights.Bold,
-                        Foreground = Assistant.TextFormatting.IdentifierProperties.ForegroundBrush
+                        Foreground = Assistant.TextFormatting.Value.IdentifierProperties.ForegroundBrush
                     }.CreateLink(typeSymbol, createLink);
                 }
             }
@@ -378,14 +411,14 @@ namespace GSharper.Extensions
                 yield return new Run(typeSymbolName)
                 {
                     FontWeight = FontWeights.Bold,
-                    Foreground = Assistant.TextFormatting.TypeParameterProperties.ForegroundBrush
+                    Foreground = Assistant.TextFormatting.Value.TypeParameterProperties.ForegroundBrush
                 }.CreateLink(typeSymbol, createLink);
             }
             else
             {
                 yield return new Run(typeSymbolName)
                 {
-                    Foreground = Assistant.TextFormatting.IdentifierProperties.ForegroundBrush
+                    Foreground = Assistant.TextFormatting.Value.IdentifierProperties.ForegroundBrush
                 }.CreateLink(typeSymbol, createLink);
             }
         }
@@ -406,7 +439,7 @@ namespace GSharper.Extensions
             {
                 yield return new Run(" ")
                 {
-                    Foreground = Assistant.TextFormatting.IdentifierProperties.ForegroundBrush
+                    Foreground = Assistant.TextFormatting.Value.IdentifierProperties.ForegroundBrush
                 };
             }
 
@@ -420,20 +453,20 @@ namespace GSharper.Extensions
 
                 yield return new Run(".")
                 {
-                    Foreground = Assistant.TextFormatting.IdentifierProperties.ForegroundBrush
+                    Foreground = Assistant.TextFormatting.Value.IdentifierProperties.ForegroundBrush
                 };
             }
 
             yield return new Run(methodSymbol.Name)
             {
                 FontWeight = FontWeights.Bold,
-                Foreground = Assistant.TextFormatting.MethodProperties.ForegroundBrush
+                Foreground = Assistant.TextFormatting.Value.MethodProperties.ForegroundBrush
             }.CreateLink(methodSymbol, createLink);
 
             yield return new Run("(")
             {
                 FontWeight = FontWeights.Bold,
-                Foreground = Assistant.TextFormatting.IdentifierProperties.ForegroundBrush
+                Foreground = Assistant.TextFormatting.Value.IdentifierProperties.ForegroundBrush
             };
 
             var parameters = methodSymbol.Parameters.Cast<IParameterSymbol>().ToArray();
@@ -448,7 +481,7 @@ namespace GSharper.Extensions
                 yield return new Run(" ");
                 yield return new Run(parameter.Name)
                 {
-                    Foreground = Assistant.TextFormatting.IdentifierProperties.ForegroundBrush
+                    Foreground = Assistant.TextFormatting.Value.IdentifierProperties.ForegroundBrush
                 };
 
                 if (i < (parameters.Length - 1))
@@ -456,7 +489,7 @@ namespace GSharper.Extensions
                     yield return new Run(", ")
                     {
                         FontWeight = FontWeights.Bold,
-                        Foreground = Assistant.TextFormatting.IdentifierProperties.ForegroundBrush
+                        Foreground = Assistant.TextFormatting.Value.IdentifierProperties.ForegroundBrush
                     };
                 }
             }
@@ -464,7 +497,7 @@ namespace GSharper.Extensions
             yield return new Run(")")
             {
                 FontWeight = FontWeights.Bold,
-                Foreground = Assistant.TextFormatting.IdentifierProperties.ForegroundBrush
+                Foreground = Assistant.TextFormatting.Value.IdentifierProperties.ForegroundBrush
             };
         }
 
@@ -505,6 +538,7 @@ namespace GSharper.Extensions
             var project = symbol.GetProject();
             if (project == null)
                 return false;
+
             return await Assistant.GetWorkspace().TryGoToDefinitionAsync(symbol, project, default);
         }
 
@@ -596,6 +630,37 @@ namespace GSharper.Extensions
 
             isSuccess = await symbol.TryGoToDefinitionAsync();
             return new GoToResult(isSuccess, !isSuccess ? defaultErrorMessage : null);
+        }
+
+        /// <summary> Получить список методов, которые считаются методами расширения </summary>
+        /// <param name="symbol"></param>
+        /// <returns></returns>
+        public static IEnumerable<IMethodSymbol> GetMethodExtensions(this ISymbol symbol)
+        {
+            var typeSymbol = symbol as ITypeSymbol;
+            typeSymbol = typeSymbol ?? symbol?.ContainingType;
+
+            if (typeSymbol != null)
+            {
+                var baseSymbols = typeSymbol.GetBaseSymbols().ToArray();
+                foreach (var s in Assistant.GetWorkspace().GetSymbols())
+                {
+                    if (s is IMethodSymbol methodSymbol)
+                    {
+                        if (methodSymbol.IsExtensionMethod)
+                        {
+                            var parameter = methodSymbol.Parameters.FirstOrDefault();
+                            if (parameter != null)
+                            {
+                                if (parameter.ContainingType.IsEqualTo(symbol) || baseSymbols.Any(x => x.IsEqualTo(parameter.ContainingType)))
+                                {
+                                    yield return methodSymbol;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using GSharper.Models;
+﻿using GSharper.Assistants;
+using GSharper.Models;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Elfie.Model;
 using Microsoft.VisualStudio.VCProjectEngine;
@@ -33,7 +34,7 @@ namespace GSharper.Extensions
             collection.Add(new Run((text ?? ""))
             {
                 FontWeight = isBold ? FontWeights.Bold : FontWeights.Light,
-                Foreground = Assistant.TextFormatting.IdentifierProperties.ForegroundBrush
+                Foreground = Assistant.TextFormatting.Value.IdentifierProperties.ForegroundBrush
             });
             return collection.Last();
         }

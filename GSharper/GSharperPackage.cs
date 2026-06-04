@@ -1,7 +1,11 @@
-﻿using GSharper.Commands;
+﻿using EnvDTE;
+using GSharper.Commands;
+using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using System;
+using System.IO;
+using System.Net;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -60,6 +64,8 @@ namespace GSharper
             await TriggerQuickInfoDialogCommand.InitializeAsync(this);
             await TriggerChangeStateCommentCommand.InitializeAsync(this);
             await TriggerChangeCaseCommand.InitializeAsync(this);
+            await TriggerRebuildProjectsCommand.InitializeAsync(this);
+            await TriggerDecompilationPackagesCommand.InitializeAsync(this);
         }
 
         #endregion

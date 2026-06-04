@@ -1,4 +1,5 @@
-﻿using GSharper.Controls;
+﻿using GSharper.Assistants;
+using GSharper.Controls;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.VisualStudio;
@@ -11,11 +12,14 @@ using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.TextManager.Interop;
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using System.Windows.Interop;
 
 namespace GSharper.Dialogs
 {
@@ -31,12 +35,12 @@ namespace GSharper.Dialogs
     /// </para>
     /// </remarks>
     [Guid("bf438e32-f64a-4043-ada2-1e5197c8316a")]
-    public class QuickInfoBlockDialog : ToolWindowPane, IVsSelectionEvents
+    public class QuickInfoBlockDialog : ToolWindowPane
     {
         private QuickInfoBlockControl control = null;
-        private IVsMonitorSelection _monitorSelection  = null;
-        private uint _cookie;
-        private IWpfTextView _textView = null;
+
+        private const int WM_LBUTTONDOWN = 0x0201;
+        private const int WM_LBUTTONUP = 0x0202;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="QuickInfoBlockDialog"/> class.
@@ -51,19 +55,12 @@ namespace GSharper.Dialogs
         public override void OnToolWindowCreated()
         {
             base.OnToolWindowCreated();
-            _monitorSelection = ServiceProvider.GlobalProvider.GetService(typeof(SVsShellMonitorSelection)) as IVsMonitorSelection;
-
-            if (_monitorSelection != null)
-            {
-                _monitorSelection.AdviseSelectionEvents(this, out _cookie);
-            }
+            ComponentDispatcher.ThreadPreprocessMessage += OnThreadPreprocessMessage;
         }
 
-        private void OnPositionChanged(object sender, Microsoft.VisualStudio.Text.Editor.CaretPositionChangedEventArgs e)
+        private void OnThreadPreprocessMessage(ref MSG msg, ref bool handled)
         {
-            bool movedByMouse = Mouse.LeftButton == MouseButtonState.Pressed || Mouse.RightButton == MouseButtonState.Pressed;
-
-            if (movedByMouse)
+            if (msg.message == WM_LBUTTONUP)
             {
                 var symbol = GetSymbolUnderCursor();
                 control.SetData(null, symbol, null, false);
@@ -103,75 +100,11 @@ namespace GSharper.Dialogs
             return symbol;
         }
 
-        public int OnElementValueChanged(uint elementid, object varOldValue, object varNewValue)
-        {
-            if (elementid == (uint)VSConstants.VSSELELEMID.SEID_WindowFrame)
-            {
-                if (varNewValue is IVsWindowFrame frame)
-                {
-                    frame.GetProperty((int)__VSFPROPID.VSFPROPID_pszMkDocument, out object pathObj);
-                    if (pathObj is string filePath)
-                    {
-                        var textView = Assistant.GetActiveTextView();
-                        if (textView != null)
-                        {
-                            textView.Caret.PositionChanged += OnPositionChanged;
-                            textView.Selection.SelectionChanged += OnSelectionChanged;
-
-                            if (_textView != null)
-                            {
-                                _textView.Caret.PositionChanged -= OnPositionChanged;
-                                _textView.Selection.SelectionChanged -= OnSelectionChanged;
-                            }
-
-                            _textView = textView;
-                        }
-                    }
-                }
-            }
-            return VSConstants.S_OK;
-        }
-
-        private void OnSelectionChanged(object sender, EventArgs e)
-        {
-            var selection = (ITextSelection)sender;
-            if (!selection.IsEmpty)
-            {
-                string selectedText = selection.StreamSelectionSpan.GetText();
-                control.SetExpressionSelected(selectedText);
-            }
-            else 
-            {
-                control.SetExpressionSelected(null);
-            }
-        }
-
-        // Метод контекста команд (можно оставить пустым)
-        public int OnCmdUIContextChanged(uint dwCmdUIContextCookie, int fActive) => VSConstants.S_OK;
-
-        public int OnSelectionChanged(IVsHierarchy pHierOld, uint itemidOld, IVsMultiItemSelect pMISOld, ISelectionContainer pSCOld, IVsHierarchy pHierNew, uint itemidNew, IVsMultiItemSelect pMISNew, ISelectionContainer pSCNew)
-        {
-            if (pHierNew != null)
-            {
-                pHierNew.GetProperty(itemidNew, (int)__VSHPROPID.VSHPROPID_Name, out object name);
-            }
-            return VSConstants.S_OK;
-        }
-
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
-                if (_monitorSelection != null && _cookie != 0)
-                {
-                    _monitorSelection.UnadviseSelectionEvents(_cookie);
-                }
-
-                if (_textView != null)
-                {
-                    _textView.Caret.PositionChanged -= OnPositionChanged;
-                }
-                _textView = null;
+                ComponentDispatcher.ThreadPreprocessMessage -= OnThreadPreprocessMessage;
             }
             base.Dispose(disposing);
         }

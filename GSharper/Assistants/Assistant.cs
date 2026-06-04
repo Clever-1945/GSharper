@@ -1,19 +1,20 @@
 ﻿using EnvDTE;
 using EnvDTE80;
+using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.ComponentModelHost;
 using Microsoft.VisualStudio.Editor;
 using Microsoft.VisualStudio.LanguageServices;
 using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Text.Classification;
+using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Text.Editor;
-using Microsoft.VisualStudio.Text.Formatting;
 using Microsoft.VisualStudio.TextManager.Interop;
 using System;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Security.Cryptography;
 
-namespace GSharper
+namespace GSharper.Assistants
 {
     public static class Assistant
     {
@@ -21,9 +22,9 @@ namespace GSharper
         private static DTE2 _dte;
         private static VisualStudioWorkspace _workspace;
 
-        private static AssistantTextFormatting _textFormatting;
+        public static Lazy<AssistantTextFormatting> TextFormatting { get; } = new Lazy<AssistantTextFormatting>(() => new AssistantTextFormatting());
 
-        public static AssistantTextFormatting TextFormatting => (_textFormatting ?? (_textFormatting = new AssistantTextFormatting()));
+        public static Lazy<AssistantDecompile> Decompile { get; } = new Lazy<AssistantDecompile>(() => new AssistantDecompile());
 
         /// <summary>
         /// Получение папки с данными плагина плагина
@@ -34,7 +35,7 @@ namespace GSharper
             string path = Environment.ExpandEnvironmentVariables("%appdata%");
             var directory = new DirectoryInfo(path);
 
-            path = Path.Combine(directory.FullName, "Sharper");
+            path = Path.Combine(directory.FullName, "GSharper");
             return Directory.CreateDirectory(path);
         }
 
@@ -139,76 +140,30 @@ namespace GSharper
 
             return editorAdapterFactory.GetWpfTextView(textViewCurrent);
         }
-    }
 
-    public class AssistantTextFormatting
-    {
-        private IClassificationFormatMapService _formatMapService;
-        private IClassificationTypeRegistryService _typeRegistry;
-        private IClassificationFormatMap _formatMap;
-
-        private IClassificationType _structType;
-        private IClassificationType _classType;
-        private IClassificationType _interfaceType;
-        private IClassificationType _enumType;
-        private IClassificationType _methodType;
-        private IClassificationType _keywordType;
-        private IClassificationType _identifierType;
-        private IClassificationType _delegateType;
-        private IClassificationType _parameterType;
-        private IClassificationType _typeParameterType;
-        private IClassificationType _fieldType;
-        private IClassificationType _propertyType;
-        private IClassificationType _localType;
-
-        public TextFormattingRunProperties StructProperties { get; }
-        public TextFormattingRunProperties ClassProperties { get; }
-        public TextFormattingRunProperties InterfaceProperties { get; }
-        public TextFormattingRunProperties EnumProperties { get; }
-        public TextFormattingRunProperties MethodProperties { get; }
-        public TextFormattingRunProperties KeywordProperties { get; }
-        public TextFormattingRunProperties IdentifierProperties { get; }
-        public TextFormattingRunProperties DelegateProperties { get; }
-        public TextFormattingRunProperties ParameterProperties { get; }
-        public TextFormattingRunProperties TypeParameterProperties { get; }
-        public TextFormattingRunProperties FieldProperties { get; }
-        public TextFormattingRunProperties LocalProperties { get; }
-        public TextFormattingRunProperties PropertyProperties { get; }
-
-        public AssistantTextFormatting()
+        public static IVsOutputWindowPane GetOutputPane()
         {
-            var _componentModel = Assistant.GetComponentModel();
-            _formatMapService = _componentModel.GetService<IClassificationFormatMapService>();
-            _typeRegistry = _componentModel.GetService<IClassificationTypeRegistryService>();
-            _formatMap = _formatMapService.GetClassificationFormatMap("text");
+            IVsOutputWindow outputWindow = Package.GetGlobalService(typeof(SVsOutputWindow)) as IVsOutputWindow;
+            Guid buildPaneGuid = VSConstants.GUID_BuildOutputWindowPane;
+            int hr = outputWindow.GetPane(ref buildPaneGuid, out IVsOutputWindowPane buildPane);
 
-            _structType = _typeRegistry.GetClassificationType("struct name");
-            _classType = _typeRegistry.GetClassificationType("class name");
-            _interfaceType = _typeRegistry.GetClassificationType("interface name");
-            _enumType = _typeRegistry.GetClassificationType("enum name");
-            _methodType = _typeRegistry.GetClassificationType("method name");
-            _keywordType = _typeRegistry.GetClassificationType("keyword");
-            _identifierType = _typeRegistry.GetClassificationType("identifier");
-            _delegateType = _typeRegistry.GetClassificationType("delegate name");
-            _parameterType = _typeRegistry.GetClassificationType("parameter name");
-            _typeParameterType = _typeRegistry.GetClassificationType("type parameter name");
-            _fieldType = _typeRegistry.GetClassificationType("field name");
-            _propertyType = _typeRegistry.GetClassificationType("property name");
-            _localType = _typeRegistry.GetClassificationType("local name");
+            if (ErrorHandler.Succeeded(hr) && buildPane != null)
+            {
+                return buildPane;
+            }
+            return null;
+        }
 
-            StructProperties = _formatMap.GetTextProperties(_structType);
-            ClassProperties = _formatMap.GetTextProperties(_classType);
-            InterfaceProperties = _formatMap.GetTextProperties(_interfaceType);
-            EnumProperties = _formatMap.GetTextProperties(_enumType);
-            MethodProperties = _formatMap.GetTextProperties(_methodType);
-            KeywordProperties = _formatMap.GetTextProperties(_keywordType);
-            IdentifierProperties = _formatMap.GetTextProperties(_identifierType);
-            DelegateProperties = _formatMap.GetTextProperties(_delegateType);
-            ParameterProperties = _formatMap.GetTextProperties(_parameterType);
-            TypeParameterProperties = _formatMap.GetTextProperties(_typeParameterType);
-            FieldProperties = _formatMap.GetTextProperties(_fieldType);
-            PropertyProperties = _formatMap.GetTextProperties(_propertyType);
-            LocalProperties = _formatMap.GetTextProperties(_localType);
+        public static Guid GetMd5(FileInfo file)
+        {
+            using (var md5 = MD5.Create())
+            {
+                using (var stream = file.OpenRead())
+                {
+                    byte[] hashBytes = md5.ComputeHash(stream);
+                    return new Guid(hashBytes);
+                }
+            }
         }
     }
 }
