@@ -3,6 +3,7 @@ using GSharper.Dialogs;
 using GSharper.Models;
 using Microsoft.CodeAnalysis;
 using Microsoft.VisualStudio.ComponentModelHost;
+using Microsoft.VisualStudio.PlatformUI;
 using Microsoft.VisualStudio.Shell;
 using System;
 using System.Collections.Generic;
@@ -501,6 +502,41 @@ namespace GSharper.Extensions
             };
         }
 
+        public static string GetGlobalName(this ISymbol symbol, GlobalNameOptions options = GlobalNameOptions.Default)
+        {
+            // Факт того, что это абстрактный дженерик тип
+            var isGenericParameter = (symbol as ITypeParameterSymbol)?.Kind == SymbolKind.TypeParameter;
+            if (isGenericParameter && options == GlobalNameOptions.AliasIfGenericParameter)
+                return "T";
+
+            var name = symbol.ContainingNamespace != null
+                ? $"{symbol.ContainingNamespace.Name}.{symbol.Name}"
+                : symbol.Name;
+
+            ISymbol[] typeArguments = ((symbol as INamedTypeSymbol)?.TypeArguments)?.ToArray();
+            typeArguments = typeArguments ?? ((symbol as IMethodSymbol)?.TypeArguments)?.ToArray();
+
+            if (typeArguments != null && typeArguments.Length > 0)
+            {
+                string[] names = new string[typeArguments.Length];
+                for (int i = 0; i < typeArguments.Length; i++)
+                {
+                    if (options == GlobalNameOptions.AliasIfGenericType)
+                    {
+                        names[i] = "T";
+                    }
+                    else
+                    {
+                        names[i] = typeArguments[i].GetGlobalName(options);
+                    }
+                }
+
+                name = $"{name}<{String.Join(", ", names)}>";
+            }
+
+            return name;
+        }
+
         /// <summary> Сравнить 2 типизированных символа, с учетом дженерик типа </summary>
         /// <param name="symbolLeft"></param>
         /// <param name="symbolRight"></param>
@@ -509,7 +545,19 @@ namespace GSharper.Extensions
         {
             if (symbolLeft == null || symbolRight == null)
                 return false;
-            return symbolLeft == symbolRight || SymbolEqualityComparer.Default.Equals(symbolLeft.OriginalDefinition, symbolRight.OriginalDefinition);
+
+            if (symbolLeft == symbolRight)
+                return true;
+
+            string nameLeft = symbolLeft.OriginalDefinition.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            string nameRight = symbolRight.OriginalDefinition.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+
+            bool areEqual = nameLeft == nameRight;
+            if (areEqual)
+            {
+                return areEqual;
+            }
+            return areEqual;
         }
 
         /// <summary> Поиск проекта, которому принадлежит символ </summary>
@@ -561,6 +609,9 @@ namespace GSharper.Extensions
                 {
                     var syntaxTree = location.SourceTree;
                     if (syntaxTree == null) 
+                        continue;
+
+                    if (!compilation.ContainsSyntaxTree(syntaxTree))
                         continue;
 
                     var semanticModel = compilation.GetSemanticModel(syntaxTree);
@@ -638,6 +689,12 @@ namespace GSharper.Extensions
         public static IEnumerable<IMethodSymbol> GetMethodExtensions(this ISymbol symbol)
         {
             var typeSymbol = symbol as ITypeSymbol;
+            typeSymbol = typeSymbol ?? (symbol as ILocalSymbol)?.Type;
+            typeSymbol = typeSymbol ?? (symbol as IMethodSymbol)?.ReturnType;
+            typeSymbol = typeSymbol ?? (symbol as IParameterSymbol)?.Type;
+            typeSymbol = typeSymbol ?? (symbol as IFieldSymbol)?.Type;
+            typeSymbol = typeSymbol ?? (symbol as IPropertySymbol)?.Type;
+            typeSymbol = typeSymbol ?? (symbol as IEventSymbol)?.Type;
             typeSymbol = typeSymbol ?? symbol?.ContainingType;
 
             if (typeSymbol != null)
@@ -645,14 +702,14 @@ namespace GSharper.Extensions
                 var baseSymbols = typeSymbol.GetBaseSymbols().ToArray();
                 foreach (var s in Assistant.GetWorkspace().GetSymbols())
                 {
-                    if (s is IMethodSymbol methodSymbol)
+                    if (s.Symbol is IMethodSymbol methodSymbol)
                     {
                         if (methodSymbol.IsExtensionMethod)
                         {
                             var parameter = methodSymbol.Parameters.FirstOrDefault();
                             if (parameter != null)
                             {
-                                if (parameter.ContainingType.IsEqualTo(symbol) || baseSymbols.Any(x => x.IsEqualTo(parameter.ContainingType)))
+                                if (typeSymbol.IsExtensionMethod(parameter.Type))
                                 {
                                     yield return methodSymbol;
                                 }

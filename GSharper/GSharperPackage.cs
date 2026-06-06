@@ -56,16 +56,17 @@ namespace GSharper
             // Do any initialization that requires the UI thread after switching to the UI thread.
             await this.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
 
-            await KeyboardShortcutCollectionCommand.InitializeAsync(this);
-            await KeyboardShortcutRestart.InitializeAsync(this);
-            await TriggerSearchCommand.InitializeAsync(this);
-            await ShowHistoryFileCommand.InitializeAsync(this);
-            await ShowChnagesBranchCommand.InitializeAsync(this);
-            await TriggerQuickInfoDialogCommand.InitializeAsync(this);
-            await TriggerChangeStateCommentCommand.InitializeAsync(this);
-            await TriggerChangeCaseCommand.InitializeAsync(this);
-            await TriggerRebuildProjectsCommand.InitializeAsync(this);
-            await TriggerDecompilationPackagesCommand.InitializeAsync(this);
+            await KeyboardShortcutCollectionCommand.InitializeAsync(this, 0x0101);
+            await KeyboardShortcutRestart.InitializeAsync(this, 0x0102);
+            await TriggerSearchCommand.InitializeAsync(this, 0x0103);
+            await TriggerQuickInfoDialogCommand.InitializeAsync(this, 0x0104);
+            await TriggerChangeStateCommentCommand.InitializeAsync(this, 0x0105);
+            await TriggerChangeCaseCommand.InitializeAsync(this, 0x0106);
+            await TriggerRebuildProjectsCommand.InitializeAsync(this, 0x0107);
+            await TriggerDecompilationPackagesCommand.InitializeAsync(this, 0x0108);
+
+            await ShowChnagesBranchCommand.InitializeAsync(this, 0x0109);
+            await ShowHistoryFileCommand.InitializeAsync(this, 0x0110);
         }
 
         #endregion

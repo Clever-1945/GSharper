@@ -2,24 +2,17 @@
 using GSharper.Controls;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
-using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.ComponentModelHost;
-using Microsoft.VisualStudio.Editor;
 using Microsoft.VisualStudio.LanguageServices;
 using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
-using Microsoft.VisualStudio.TextManager.Interop;
 using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Net;
 using System.Runtime.InteropServices;
-using System.Threading.Tasks;
-using System.Windows.Input;
+using System.Windows;
 using System.Windows.Interop;
+using System.Windows.Media;
 
 namespace GSharper.Dialogs
 {
@@ -39,8 +32,8 @@ namespace GSharper.Dialogs
     {
         private QuickInfoBlockControl control = null;
 
-        private const int WM_LBUTTONDOWN = 0x0201;
         private const int WM_LBUTTONUP = 0x0202;
+        private ISymbol _symbol = null;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="QuickInfoBlockDialog"/> class.
@@ -63,7 +56,14 @@ namespace GSharper.Dialogs
             if (msg.message == WM_LBUTTONUP)
             {
                 var symbol = GetSymbolUnderCursor();
-                control.SetData(null, symbol, null, false);
+                if (symbol != null)
+                {
+                    if (_symbol != symbol && !SymbolEqualityComparer.Default.Equals(_symbol, symbol))
+                    {
+                        _symbol = symbol;
+                        control.SetData(null, symbol, null, false);
+                    }
+                }
             }
         }
 

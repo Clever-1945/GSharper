@@ -1,12 +1,10 @@
-﻿using EnvDTE;
-using GSharper.Assistants;
+﻿using GSharper.Assistants;
 using GSharper.Dialogs;
 using GSharper.Extensions;
 using GSharper.Helpers;
 using GSharper.Models;
 using Microsoft.CodeAnalysis;
 using Microsoft.VisualStudio.Language.Intellisense;
-using Microsoft.VisualStudio.RpcContracts.DiagnosticManagement;
 using Microsoft.VisualStudio.Shell;
 using System;
 using System.Collections.Generic;
@@ -16,6 +14,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Xml.Linq;
 
@@ -26,8 +25,13 @@ namespace GSharper.Controls
     /// </summary>
     public partial class QuickInfoBlockControl : UserControl
     {
-        internal enum CommandMethodSymbol
+        internal enum CommandSymbol
         {
+            /// <summary>
+            /// Копировать имя символа
+            /// </summary>
+            CopyName,
+            
             /// <summary>
             /// Найти все реализации
             /// </summary>
@@ -39,18 +43,27 @@ namespace GSharper.Controls
             GoToOrFindBase,
         }
 
+        internal class ContextMenuCommand
+        {
+            public CommandSymbol CommandSymbol { set; get; }
+            public ISymbol Symbol { set; get; }
+        }
+
         private ISymbol _symbol;
         private ISymbol _runtimeSymbol;
         private ISymbol[] _baseTypes;
         private ISymbol[] _implementations;
         private IMethodSymbol[] _overloadingMethods;
-        private Microsoft.CodeAnalysis.Diagnostic[] _diagnostics;
+        private IMethodSymbol[] _extensions;
+        private INamedTypeSymbol[] _extensionTypes;
+        private Diagnostic[] _diagnostics;
         private SyntaxNode _node;
         private string _commentStringXml;
         private XElement _commentXml;
         private string _expressionToEvaluate;
         private string _expressionSelected;
         private IAsyncQuickInfoSession _session;
+        private ContextMenu _symbolContextMenu = new ContextMenu();
         private bool _hideOther;
         private readonly int _limitCountSymbol = 4;
         private CancellationTokenSource _cancellationTokenSetData = null;
@@ -59,14 +72,17 @@ namespace GSharper.Controls
         public QuickInfoBlockControl()
         {
             InitializeComponent();
-            this.AddHandler(Hyperlink.ClickEvent, new RoutedEventHandler(OnHyperlinkClicked), true);
+            // this.AddHandler(Hyperlink.ClickEvent, new RoutedEventHandler(OnHyperlinkClicked), true);
+            this.AddHandler(Hyperlink.MouseDownEvent, new MouseButtonEventHandler(OnHyperlinkClicked), true);
             this.Loaded += OnLoaded;
+            _progressBarLoading.Visibility = Visibility.Collapsed;
         }
 
         public QuickInfoBlockControl SetData(IAsyncQuickInfoSession session, ISymbol symbol, SyntaxNode node, bool hideOther = true)
         {
             _cancellationTokenSetData?.Cancel();
             _cancellationTokenSetData = new CancellationTokenSource();
+            _progressBarLoading.Visibility = Visibility.Visible;
 
             ThreadPool.QueueUserWorkItem(async (s) => 
             {
@@ -114,24 +130,56 @@ namespace GSharper.Controls
             _implementations = GetImplementations();
             _overloadingMethods = GetOverloadingMethods();
             _diagnostics = _symbol?.GetDiagnostics() ?? Array.Empty<Microsoft.CodeAnalysis.Diagnostic>();
+            _extensions = _symbol?.GetMethodExtensions()?.ToArray() ?? Array.Empty<IMethodSymbol>();
+            _extensionTypes = _extensions.Select(x => x.ContainingType).Distinct().ToArray();
 
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             Render();
         }
 
-        private void OnHyperlinkClicked(object sender, RoutedEventArgs e)
+        private void OnHyperlinkClicked(object sender, MouseButtonEventArgs e)
         {
-            if (e.OriginalSource is Hyperlink link)
+            var link = (e.OriginalSource as Hyperlink) ?? ((e.OriginalSource as Run)?.Parent as Hyperlink);
+            if (link == null)
+                return;
+
+            if (e.ButtonState != MouseButtonState.Pressed)
+                return;
+
+            if (e.ChangedButton == MouseButton.Left)
             {
                 if (link.Tag is ISymbol symbol)
                 {
-                    symbol.TryGoToDefinitionAsync();
+                    _progressBarLoading.Visibility = Visibility.Visible;
+                    symbol.TryGoToDefinitionAsync()
+                        .Then(x => {
+                            _progressBarLoading.Visibility = Visibility.Collapsed;
+                        })
+                        .Catch(x => {
+                            _progressBarLoading.Visibility = Visibility.Collapsed;
+                        });
                 }
                 if (link.Tag is HyperlinkTagGoToSymbols goToSymbols)
                 {
                     var dialog = new ListSymbolDialog(goToSymbols.Symbols);
                     dialog.Owner = Application.Current.MainWindow;
                     dialog.ShowModal();
+                }
+            }
+
+            if (e.ChangedButton == MouseButton.Middle)
+            {
+                if (link.Tag is ISymbol symbol)
+                {
+                    this.SetData(_session, symbol, null, _hideOther);
+                }
+            }
+
+            if (e.ChangedButton == MouseButton.Right)
+            {
+                if (link.Tag is ISymbol symbol)
+                {
+                    CreateContextMenu(link, symbol);
                 }
             }
         }
@@ -231,9 +279,13 @@ namespace GSharper.Controls
 
         private void Render()
         {
+            _progressBarLoading.Visibility = Visibility.Collapsed;
             _textBlockSymbolName.Inlines.Clear();
             _textBlockSymbolName.Inlines.Add(_symbol, createLink: true);
             _imageSymbolName.Source = ResourceHelper.GetSource(_symbol.GetResourceForName());
+
+            _textBlockSymbolName.Visibility = Visibility.Visible;
+            _imageSymbolName.Visibility = Visibility.Visible;
 
             _textBlockSelectedType.Inlines.Clear();
             _textBlockSelectedType.Visibility = Visibility.Collapsed;
@@ -245,6 +297,8 @@ namespace GSharper.Controls
             ApplyImplementations();
             ApplyErrorAndWarning();
             ApplyOverloadingMethods();
+            ApplyExtensions();
+            ApplyExtensionsTypes();
         }
 
         private string GetSummary()
@@ -316,6 +370,61 @@ namespace GSharper.Controls
                 }
                 _textBoxOverloadingMethod.Inlines.AddText("\t");
                 _textBoxOverloadingMethod.Inlines.Add(overloading, createLink: true, clearValue: false);
+            }
+        }
+
+        private void ApplyExtensionsTypes()
+        {
+            _textBlockExtensionsTypes.Inlines.Clear();
+            _textBlockExtensionsTypes.Visibility = Visibility.Collapsed;
+            if (_extensionTypes.Length < 1)
+            {
+                return;
+            }
+
+            _textBlockExtensionsTypes.Visibility = Visibility.Visible;
+
+            _textBlockExtensionsTypes.Inlines.AddText("Классы расширения: ", true);
+            for (int i = 0; i < Math.Min(_extensionTypes.Length, 4); i++)
+            {
+                var extension = _extensionTypes[i];
+                _textBlockExtensionsTypes.Inlines.AddText("\r\n");
+                _textBlockExtensionsTypes.Inlines.AddText("\t");
+                _textBlockExtensionsTypes.Inlines.Add(extension, createLink: true, clearValue: false);
+            }
+
+            if (_extensionTypes.Length > 4)
+            {
+                _textBlockExtensionsTypes.Inlines.AddText("\r\n");
+                _textBlockExtensionsTypes.Inlines.AddText("\t");
+                _textBlockExtensionsTypes.Inlines.AddDots(_extensionTypes);
+            }
+        }
+
+        private void ApplyExtensions()
+        {
+            _textBlockExtensions.Inlines.Clear();
+            _textBlockExtensions.Visibility = Visibility.Collapsed;
+            if (_extensions.Length < 1)
+            {
+                return;
+            }
+            _textBlockExtensions.Visibility = Visibility.Visible;
+
+            _textBlockExtensions.Inlines.AddText("Методы расширения: ", true);
+            for (int i = 0; i < Math.Min(_extensions.Length, 4); i++) 
+            {
+                var extension = _extensions[i];
+                _textBlockExtensions.Inlines.AddText("\r\n");
+                _textBlockExtensions.Inlines.AddText("\t");
+                _textBlockExtensions.Inlines.Add(extension, createLink: true, clearValue: false);
+            }
+
+            if (_extensions.Length > 4)
+            {
+                _textBlockExtensions.Inlines.AddText("\r\n");
+                _textBlockExtensions.Inlines.AddText("\t");
+                _textBlockExtensions.Inlines.AddDots(_extensions);
             }
         }
 
@@ -567,7 +676,7 @@ namespace GSharper.Controls
 
         private void OnClickSymbolName(object sender, RoutedEventArgs e)
         {
-            CreateContextMenu(sender as Button, _symbol as IMethodSymbol);
+            CreateContextMenu(sender as Button, _symbol);
         }
 
         private void OnClickCopy(object sender, RoutedEventArgs e)
@@ -575,18 +684,42 @@ namespace GSharper.Controls
 
         }
 
-        private void CreateContextMenu(Button button, IMethodSymbol symbol)
+        private void CreateContextMenu(DependencyObject target, ISymbol symbol)
         {
-            if (symbol == null || button == null)
+            if (symbol == null)
                 return;
 
-            ContextMenu menu = new ContextMenu();
-            menu.Add($"Перейти / найти реализации ", CommandMethodSymbol.GoToOrFindImplementations, OnClickContextMenu);
-            menu.Add($"Перейти / найти базовые ", CommandMethodSymbol.GoToOrFindBase, OnClickContextMenu);
+            _symbolContextMenu.Items.Clear();
+            
+            _symbolContextMenu.Add($"Копировать имя", new ContextMenuCommand()
+            {
+                CommandSymbol = CommandSymbol.CopyName,
+                Symbol = symbol
+            }, OnClickContextMenu);
+
+
+            _symbolContextMenu.Add($"Перейти / найти реализации", new ContextMenuCommand()
+            {
+                CommandSymbol = CommandSymbol.GoToOrFindImplementations,
+                Symbol = symbol
+            }, OnClickContextMenu);
+
+
+            _symbolContextMenu.Add($"Перейти / найти базовые", new ContextMenuCommand()
+            {
+                CommandSymbol = CommandSymbol.GoToOrFindBase,
+                Symbol = symbol
+            }, OnClickContextMenu);
 
             // Показываем меню под кнопкой
-            menu.PlacementTarget = button;
-            menu.IsOpen = true;
+            // menu.PlacementTarget = button;
+            _symbolContextMenu.PlacementTarget = this;
+            _symbolContextMenu.IsOpen = true;
+
+            if (target != null)
+            {
+                ContextMenuService.SetContextMenu(target, _symbolContextMenu);
+            }
         }
 
         private void OnClickContextMenu(object sender, RoutedEventArgs e)
@@ -597,11 +730,26 @@ namespace GSharper.Controls
 
         private async void OnClickContextMenu(MenuItem menuItem)
         {
-            if (_symbol is IMethodSymbol _methodSymbol && menuItem?.Tag is CommandMethodSymbol command)
+            if (menuItem?.Tag is ContextMenuCommand command)
             {
-                if (command == CommandMethodSymbol.GoToOrFindImplementations)
+                if (command.CommandSymbol == CommandSymbol.GoToOrFindImplementations)
                 {
-                    await _methodSymbol.TryGoToImplementations();
+                    await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+                    _progressBarLoading.Visibility = Visibility.Visible;
+                    await command.Symbol.TryGoToImplementations();
+
+                    await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+                    _progressBarLoading.Visibility = Visibility.Collapsed;
+                }
+
+                if (command.CommandSymbol == CommandSymbol.GoToOrFindBase)
+                {
+                    // await command.Symbol.TryGoToImplementations();
+                }
+
+                if (command.CommandSymbol == CommandSymbol.CopyName)
+                {
+                    Clipboard.SetText(command.Symbol.Name);
                 }
             }
         }

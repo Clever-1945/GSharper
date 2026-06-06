@@ -119,6 +119,22 @@
 			</Strings>
 		</Button>
 
+		<Button guid="guidGSharperPackageCmdSet" id="ShowChnagesBranchCommandId" priority="0x0109" type="Button">
+			<Parent guid="guidGSharperPackageCmdSet" id="GSharperSubMenu" />
+			<Strings>
+				<ButtonText>Декомпилировать пакеты</ButtonText>
+				<LocCanonicalName>.GSharper.showChnagesBranchCommand</LocCanonicalName>
+			</Strings>
+		</Button>
+
+		<Button guid="guidGSharperPackageCmdSet" id="ShowHistoryFileCommandId" priority="0x0110" type="Button">
+			<Parent guid="guidGSharperPackageCmdSet" id="GSharperSubMenu" />
+			<Strings>
+				<ButtonText>Декомпилировать пакеты</ButtonText>
+				<LocCanonicalName>.GSharper.showHistoryFileCommand</LocCanonicalName>
+			</Strings>
+		</Button>
+
 		<Button guid="guidGSharperPackageContextCmdSet" id="TriggerHistoryFileDialogId" priority="0x0101" type="Button">
 			<Parent guid="guidGSharperPackageContextCmdSet" id="SharperSubContextMenu" />
 			<Strings>
@@ -167,6 +183,8 @@
 		<IDSymbol name="TriggerChangeCaseCommandId" value="0x0106" />
 		<IDSymbol name="TriggerRebuildProjectsCommandId" value="0x0107" />
 		<IDSymbol name="TriggerDecompilationPackagesCommandId" value="0x0108" />
+		<IDSymbol name="ShowChnagesBranchCommandId" value="0x0109" />
+		<IDSymbol name="ShowHistoryFileCommandId" value="0x0110" />
 
 		<IDSymbol name="MyGitGroup" value="0x1150" />
 	  <IDSymbol value="256" name="cmdidQuickInfoBlockDialogCommand" />

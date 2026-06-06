@@ -58,5 +58,30 @@ namespace GSharper.Extensions
         {
             return typeSymbol.GetImplementations(false).Concat(typeSymbol.GetImplementations(true));
         }
+
+        /// <summary>
+        /// Проверяет 2 типа для сопоставлений функции расширения. Первый параметр в функции расширения
+        /// </summary>
+        /// <param name="symbolLeft"></param>
+        /// <param name="parameterSymbol"></param>
+        /// <returns></returns>
+        public static bool IsExtensionMethod(this ITypeSymbol symbolLeft, ITypeSymbol parameterSymbol)
+        {
+            if (symbolLeft == null || parameterSymbol == null)
+                return false;
+
+            if (symbolLeft == parameterSymbol)
+                return true;
+
+            if (symbolLeft.IsEqualTo(parameterSymbol))
+                return true;
+
+            foreach (var baseSymbol in symbolLeft.GetBaseSymbols())
+            {
+                if (baseSymbol.IsEqualTo(parameterSymbol))
+                    return true;
+            }
+            return false;
+        }
     }
 }
