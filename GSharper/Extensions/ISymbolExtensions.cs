@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Documents;
@@ -502,41 +503,6 @@ namespace GSharper.Extensions
             };
         }
 
-        public static string GetGlobalName(this ISymbol symbol, GlobalNameOptions options = GlobalNameOptions.Default)
-        {
-            // Факт того, что это абстрактный дженерик тип
-            var isGenericParameter = (symbol as ITypeParameterSymbol)?.Kind == SymbolKind.TypeParameter;
-            if (isGenericParameter && options == GlobalNameOptions.AliasIfGenericParameter)
-                return "T";
-
-            var name = symbol.ContainingNamespace != null
-                ? $"{symbol.ContainingNamespace.Name}.{symbol.Name}"
-                : symbol.Name;
-
-            ISymbol[] typeArguments = ((symbol as INamedTypeSymbol)?.TypeArguments)?.ToArray();
-            typeArguments = typeArguments ?? ((symbol as IMethodSymbol)?.TypeArguments)?.ToArray();
-
-            if (typeArguments != null && typeArguments.Length > 0)
-            {
-                string[] names = new string[typeArguments.Length];
-                for (int i = 0; i < typeArguments.Length; i++)
-                {
-                    if (options == GlobalNameOptions.AliasIfGenericType)
-                    {
-                        names[i] = "T";
-                    }
-                    else
-                    {
-                        names[i] = typeArguments[i].GetGlobalName(options);
-                    }
-                }
-
-                name = $"{name}<{String.Join(", ", names)}>";
-            }
-
-            return name;
-        }
-
         /// <summary> Сравнить 2 типизированных символа, с учетом дженерик типа </summary>
         /// <param name="symbolLeft"></param>
         /// <param name="symbolRight"></param>
@@ -823,16 +789,9 @@ namespace GSharper.Extensions
                 {
                     if (s.Symbol is IMethodSymbol methodSymbol)
                     {
-                        if (methodSymbol.IsExtensionMethod)
+                        if (typeSymbol.IsExtensionMethod(methodSymbol))
                         {
-                            var parameter = methodSymbol.Parameters.FirstOrDefault();
-                            if (parameter != null)
-                            {
-                                if (typeSymbol.IsExtensionMethod(parameter.Type))
-                                {
-                                    yield return methodSymbol;
-                                }
-                            }
+                            yield return methodSymbol;
                         }
                     }
                 }

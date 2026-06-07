@@ -1,8 +1,10 @@
-﻿using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.Elfie.Model;
-using Microsoft.VisualStudio.LanguageServices;
+﻿using GSharper.Collections;
 using GSharper.Helpers;
 using GSharper.Models;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Elfie.Model;
+using Microsoft.VisualStudio.LanguageServices;
+using Microsoft.VisualStudio.Shell.Interop;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,6 +15,8 @@ namespace GSharper.Extensions
 {
     public static class VisualStudioWorkspaceExtensions
     {
+        private static ThreadDictionary<MetadataReference, SymbolProjectDefinition[]> _symbols = new ThreadDictionary<MetadataReference, SymbolProjectDefinition[]>();
+
         /// <summary>
         /// Базовый метод для поиска символов
         /// </summary>
@@ -20,7 +24,7 @@ namespace GSharper.Extensions
         /// <param name="isExternal">Искать внутри или во внешних библиотеках</param>
         /// <returns></returns>
         public static IEnumerable<SymbolProjectDefinition> GetSymbols(this VisualStudioWorkspace _workspace, bool isExternal)
-        {
+        {            
             var _cancellationTokenSource = new CancellationTokenSource();
             try
             {
@@ -34,22 +38,33 @@ namespace GSharper.Extensions
                             var results = compilation.GetSymbolsWithName(name => true, SymbolFilter.All, _cancellationTokenSource.Token);
                             foreach (var result in results)
                             {
-                                yield return new SymbolProjectDefinition(result, project, null);
+                                yield return new SymbolProjectDefinition(result, project, null, compilation);
                             }
                         }
                         else
                         {
                             foreach (var reference in compilation.References)
                             {
-                                var assemblySymbol = compilation.GetAssemblyOrModuleSymbol(reference) as IAssemblySymbol;
-
-                                if (assemblySymbol != null)
+                                var symbols = _symbols.GetOrAdd(reference, (r) =>
                                 {
-                                    var globalNamespace = assemblySymbol.GlobalNamespace;
-                                    foreach (var symbol in ForeachSymbol(globalNamespace))
+                                    var list = new List<SymbolProjectDefinition>();
+                                    var assemblySymbol = compilation.GetAssemblyOrModuleSymbol(reference) as IAssemblySymbol;
+                                    if (assemblySymbol != null)
                                     {
-                                        yield return new SymbolProjectDefinition(symbol, project, reference);
+                                        var globalNamespace = assemblySymbol.GlobalNamespace;
+                                        foreach (var symbol in ForeachSymbol(globalNamespace))
+                                        {
+                                            list.Add(new SymbolProjectDefinition(symbol, project, reference, compilation));
+                                        }
                                     }
+
+                                    return list.ToArray();
+                                });
+
+
+                                foreach (var symbol in symbols)
+                                {
+                                    yield return symbol;
                                 }
                             }
                         }

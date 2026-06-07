@@ -1,9 +1,4 @@
 ﻿using Microsoft.CodeAnalysis;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GSharper.Models
 {
@@ -12,12 +7,14 @@ namespace GSharper.Models
         public ISymbol Symbol { get; }
         public Project Project { get; }
         public MetadataReference Reference { get; }
+        public Compilation Compilation { get; }
 
-        public SymbolProjectDefinition(ISymbol symbol, Project project, MetadataReference reference)
+        public SymbolProjectDefinition(ISymbol symbol, Project project, MetadataReference reference, Compilation compilation)
         {
             Symbol = symbol;
             Project = project;
             Reference = reference;
+            Compilation = compilation;
         }
     }
 }

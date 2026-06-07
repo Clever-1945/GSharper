@@ -33,10 +33,6 @@ namespace GSharper.Dialogs
     [Guid("bf438e32-f64a-4043-ada2-1e5197c8316a")]
     public class QuickInfoBlockDialog : ToolWindowPane
     {
-        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
-        private static extern int GetClassName(IntPtr hWnd, StringBuilder lpClassName, int nMaxCount);
-
-
         private QuickInfoBlockControl control = null;
 
         private const int WM_LBUTTONUP = 0x0202;

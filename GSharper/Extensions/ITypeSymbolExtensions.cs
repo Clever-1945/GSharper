@@ -60,28 +60,31 @@ namespace GSharper.Extensions
         }
 
         /// <summary>
-        /// Проверяет 2 типа для сопоставлений функции расширения. Первый параметр в функции расширения
+        /// Проверяет, подходит ли метод расширения для вызова у указанного типа.
         /// </summary>
-        /// <param name="symbolLeft"></param>
-        /// <param name="parameterSymbol"></param>
-        /// <returns></returns>
-        public static bool IsExtensionMethod(this ITypeSymbol symbolLeft, ITypeSymbol parameterSymbol)
+        /// <param name="methodSymbol">Метод, который мы проверяем.</param>
+        /// <param name="receiverType">Тип, у которого мы хотим вызвать этот метод.</param>
+        /// <returns>True, если метод расширения подходит для данного типа.</returns>
+        public static bool IsExtensionMethod(this ITypeSymbol receiverType, IMethodSymbol methodSymbol)
         {
-            if (symbolLeft == null || parameterSymbol == null)
+            if (methodSymbol == null || receiverType == null)
                 return false;
 
-            if (symbolLeft == parameterSymbol)
-                return true;
+            if (!methodSymbol.IsExtensionMethod)
+                return false;
 
-            if (symbolLeft.IsEqualTo(parameterSymbol))
-                return true;
+            if (methodSymbol.Parameters.Length == 0)
+                return false;
 
-            foreach (var baseSymbol in symbolLeft.GetBaseSymbols())
+            try
             {
-                if (baseSymbol.IsEqualTo(parameterSymbol))
-                    return true;
+                IMethodSymbol reducedMethod = methodSymbol.ReduceExtensionMethod(receiverType);
+                return reducedMethod != null;
             }
-            return false;
+            catch
+            {
+                return false;
+            }
         }
     }
 }

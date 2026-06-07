@@ -133,7 +133,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
         <ProgressBar
@@ -232,79 +232,82 @@
 
         </Grid>
 
-        <Grid Grid.Row="2">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
+        <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
 
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
-            <TextBox
-                Grid.Row="0"
-                Visibility="Collapsed"
-                Name="_textBoxSummary"
-            ></TextBox>
+                <TextBox
+                    Grid.Row="0"
+                    Visibility="Collapsed"
+                    Name="_textBoxSummary"
+                ></TextBox>
 
-            <TextBox
-                Grid.Row="1"
-                Visibility="Collapsed"
-                Name="_textBoxParams"
-            ></TextBox>
+                <TextBox
+                    Grid.Row="1"
+                    Visibility="Collapsed"
+                    Name="_textBoxParams"
+                ></TextBox>
 
-            <TextBlock
-                Grid.Row="2"
-                Name="_textBlockRuntimeValue"
-            ></TextBlock>
-
-            <TextBlock
-                Grid.Row="3"
-                Name="_textBlockSelectedType"
-            ></TextBlock>
-
-            <TextBox
-                Grid.Row="4"
-                Visibility="Collapsed"
-                FontWeight="Bold"
-                Name="_textBoxOverloadingMethodLabel"
-            ></TextBox>
-
-            <ScrollViewer VerticalScrollBarVisibility="Auto" Grid.Row="5" Name="_scrollViewerOverloadingMethod" MaxHeight="50">
                 <TextBlock
-                    Name="_textBoxOverloadingMethod"
+                    Grid.Row="2"
+                    Name="_textBlockRuntimeValue"
                 ></TextBlock>
-            </ScrollViewer>
 
-            <TextBlock
-                Grid.Row="6"
-                Name="_textBlockImplementations"
-            ></TextBlock>
+                <TextBlock
+                    Grid.Row="3"
+                    Name="_textBlockSelectedType"
+                ></TextBlock>
 
-            <TextBlock
-                Grid.Row="7"
-                Name="_textBlockBaseTypes"
-            ></TextBlock>
+                <TextBox
+                    Grid.Row="4"
+                    Visibility="Collapsed"
+                    FontWeight="Bold"
+                    Name="_textBoxOverloadingMethodLabel"
+                ></TextBox>
 
-            <TextBlock
-                Grid.Row="8"
-                Name="_textBlockExtensions"
-            ></TextBlock>
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Grid.Row="5" Name="_scrollViewerOverloadingMethod" MaxHeight="50">
+                    <TextBlock
+                        Name="_textBoxOverloadingMethod"
+                    ></TextBlock>
+                </ScrollViewer>
 
-            <TextBlock
-                Grid.Row="9"
-                Name="_textBlockExtensionsTypes"
-            ></TextBlock>
-        </Grid>
+                <TextBlock
+                    Grid.Row="6"
+                    Name="_textBlockImplementations"
+                ></TextBlock>
+
+                <TextBlock
+                    Grid.Row="7"
+                    Name="_textBlockBaseTypes"
+                ></TextBlock>
+
+                <TextBlock
+                    Grid.Row="8"
+                    Name="_textBlockExtensions"
+                ></TextBlock>
+
+                <TextBlock
+                    Grid.Row="9"
+                    Name="_textBlockExtensionsTypes"
+                ></TextBlock>
+            </Grid>
+        </ScrollViewer>
+        
     </Grid>
 </UserControl>
