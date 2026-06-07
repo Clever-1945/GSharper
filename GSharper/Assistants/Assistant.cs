@@ -1,11 +1,14 @@
 ﻿using EnvDTE;
 using EnvDTE80;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Text;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.ComponentModelHost;
 using Microsoft.VisualStudio.Editor;
 using Microsoft.VisualStudio.LanguageServices;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
+using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.TextManager.Interop;
 using System;
@@ -139,6 +142,39 @@ namespace GSharper.Assistants
             var editorAdapterFactory = componentModel.GetService<IVsEditorAdaptersFactoryService>();
 
             return editorAdapterFactory.GetWpfTextView(textViewCurrent);
+        }
+
+        public static ISymbol GetSymbolUnderCursor(IWpfTextView textView = null)
+        {
+            textView = textView ?? Assistant.GetActiveTextView();
+            if (textView == null)
+                return null;
+
+            SnapshotPoint caretPoint = textView.Caret.Position.BufferPosition;
+            int position = caretPoint.Position;
+
+            var componentModel = GetComponentModel();
+            var workspace = componentModel.GetService<VisualStudioWorkspace>();
+            if (workspace == null)
+                return null;
+
+            var document = caretPoint.Snapshot.GetOpenDocumentInCurrentContextWithChanges();
+            if (document == null)
+                return null;
+
+            if (!document.TryGetSemanticModel(out var semanticModel))
+                return null;
+
+            if (!document.TryGetSyntaxRoot(out var root))
+                return null;
+
+            SyntaxNode node = root.FindToken(position).Parent;
+            if (node == null)
+                return null;
+
+            SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(node);
+            ISymbol symbol = symbolInfo.Symbol ?? symbolInfo.CandidateSymbols.FirstOrDefault() ?? semanticModel.GetDeclaredSymbol(node);
+            return symbol;
         }
 
         public static IVsOutputWindowPane GetOutputPane()

@@ -20,9 +20,6 @@ namespace GSharper.Commands
             // Форматировать выбранный участок кода
             shortcut["Edit.FormatSelection"] = "Текстовый редактор::Ctrl+Alt+L";
 
-            // Перейти к реализации
-            shortcut["Edit.GoToImplementation"] = "Текстовый редактор::Ctrl+Alt+Shift+B";
-
             // перейти к базовому
             shortcut["Edit.GoToBase"] = "Текстовый редактор::Ctrl+U";
 
@@ -34,6 +31,9 @@ namespace GSharper.Commands
 
             // Изменить регистр слова на противоположный
             shortcut["GSharper.triggerChangeCaseCommand"] = "Текстовый редактор::Ctrl+Shift+U";
+
+            // Перейти к реализации
+            shortcut["GSharper.triggerGoToImplementationsCommand"] = "Текстовый редактор::Ctrl+Alt+Shift+B";
 
             // Следущая ошибка в коде
             shortcut["View.NextError"] = "Текстовый редактор::F12";

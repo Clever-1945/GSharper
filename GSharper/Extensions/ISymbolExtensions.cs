@@ -628,6 +628,154 @@ namespace GSharper.Extensions
             return Array.Empty<Diagnostic>();   
         }
 
+        /// <summary>
+        /// Получить символ типа
+        /// </summary>
+        /// <param name="symbol"></param>
+        /// <returns></returns>
+        public static ITypeSymbol GetTypeSymbol(this ISymbol symbol)
+        {
+            var typeSymbol = symbol as ITypeSymbol;            
+            if (typeSymbol != null)
+            {
+                return typeSymbol;
+            }
+            var methodSymbol = symbol as IMethodSymbol;
+            if (methodSymbol != null)
+            {
+                if (methodSymbol.MethodKind == MethodKind.Constructor || methodSymbol.MethodKind == MethodKind.StaticConstructor)
+                {
+                    return methodSymbol.ContainingType;
+                }
+
+                return methodSymbol.ReturnType;
+            }
+
+            var propertySymbol = symbol as IPropertySymbol;
+            if (propertySymbol != null)
+            {
+                return propertySymbol.Type;
+            }
+
+            var parameterSymbol = symbol as IParameterSymbol;
+            if (parameterSymbol != null)
+            {
+                return parameterSymbol.Type;
+            }
+
+            var localSymbol = symbol as ILocalSymbol;
+            if (localSymbol != null)
+            {
+                return localSymbol.Type;
+            }
+            var fieldSymbol = symbol as IFieldSymbol;
+            if (fieldSymbol != null)
+            {
+                return fieldSymbol.Type;
+            }
+
+            var eventSymbol = symbol as IEventSymbol;
+            {
+                if (eventSymbol != null)
+                {
+                    return eventSymbol.Type;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary> Получить символы базовой реализации </summary>
+        /// <param name="symbol"></param>
+        /// <returns></returns>
+        public static IEnumerable<ISymbol> GetImplementations(this ISymbol symbol, bool isExternal)
+        {
+            var propertySymbol = symbol as IPropertySymbol;
+            if (propertySymbol != null)
+            {
+                return propertySymbol.GetImplementations(isExternal);
+            }
+
+            var methodSymbol = symbol as IMethodSymbol;
+            if (methodSymbol != null)
+            {
+                return methodSymbol.GetImplementations(isExternal);
+            }
+
+            var typeSymbol = symbol.GetTypeSymbol();
+            if (typeSymbol != null)
+            {
+                return typeSymbol.GetImplementations(isExternal);
+            }
+
+            return Array.Empty<ISymbol>();
+        }
+
+        /// <summary> Получить символы базовой реализации </summary>
+        /// <param name="symbol"></param>
+        /// <returns></returns>
+        public static IEnumerable<ISymbol> GetImplementations(this ISymbol symbol)
+        {
+            return symbol.GetImplementations(false).Concat(symbol.GetImplementations(true));
+        }
+
+        /// <summary> Получить символы базовой реализации </summary>
+        /// <param name="symbol"></param>
+        /// <returns></returns>
+        public static IEnumerable<ISymbol> GetBaseSymbols(this ISymbol symbol)
+        {            
+            var propertySymbol = symbol as IPropertySymbol;
+            if (propertySymbol != null)
+            {
+                return propertySymbol.GetBaseSymbols();
+            }
+
+            var methodSymbol = symbol as IMethodSymbol;
+            if (methodSymbol != null)
+            {
+                if (methodSymbol.MethodKind == MethodKind.Constructor || methodSymbol.MethodKind == MethodKind.StaticConstructor)
+                {
+                    return methodSymbol.ContainingType.GetBaseSymbols();
+                }
+
+                return methodSymbol.GetBaseSymbols();
+            }
+
+            var typeSymbol = symbol.GetTypeSymbol();
+            if (typeSymbol != null)
+            {
+                return typeSymbol.GetBaseSymbols();
+            }
+
+            return Array.Empty<ISymbol>();
+        }
+
+        /// <summary> Попытка перейти к определению символа </summary>
+        /// <param name="symbol"></param>
+        /// <returns></returns>
+        public static async Task<GoToResult> TryGoToBaseTypes(this ISymbol symbol)
+        {
+            bool isSuccess;
+            string defaultErrorMessage = "Базовый символ не найден";
+
+            var baseSymbols = symbol.GetBaseSymbols().ToArray();
+            if (baseSymbols.Length == 1)
+            {
+                isSuccess = await baseSymbols.First().TryGoToDefinitionAsync();
+                return new GoToResult(isSuccess, !isSuccess ? defaultErrorMessage : null);
+            }
+            if (baseSymbols.Length == 0)
+            {
+                isSuccess = await symbol.TryGoToDefinitionAsync();
+                return new GoToResult(isSuccess, !isSuccess ? defaultErrorMessage : null);
+            }
+
+            var dialog = new ListSymbolDialog(baseSymbols);
+            dialog.Owner = Application.Current.MainWindow;
+            dialog.ShowModal();
+            return new GoToResult(true, null);
+        }
+
         /// <summary> Попытка перейти к определению символа </summary>
         /// <param name="symbol"></param>
         /// <returns></returns>
@@ -635,52 +783,23 @@ namespace GSharper.Extensions
         {
             bool isSuccess;
             string defaultErrorMessage = "Реализация не найдена";
-            if (symbol is ITypeSymbol typeSymbol)
-            {
-                var implementations = typeSymbol.GetImplementations().ToArray();
-                if (implementations.Length == 1)
-                {
-                    isSuccess = await implementations.First().TryGoToDefinitionAsync();
-                    return new GoToResult(isSuccess, !isSuccess ? defaultErrorMessage : null);
-                }
-                if (implementations.Length == 0)
-                {
-                    if (typeSymbol.TypeKind == TypeKind.Interface || typeSymbol.TypeKind == TypeKind.Unknown)
-                    {
-                        return new GoToResult(false, defaultErrorMessage);
-                    }
-                    isSuccess = await typeSymbol.TryGoToDefinitionAsync();
-                    return new GoToResult(isSuccess, !isSuccess ? defaultErrorMessage : null);
-                }
 
-                var dialog = new ListSymbolDialog(implementations.ToArray());
-                dialog.Owner = Application.Current.MainWindow;
-                dialog.ShowModal();
-                return new GoToResult(true, null);
+            var implementations = symbol.GetImplementations().ToArray();
+            if (implementations.Length == 1)
+            {
+                isSuccess = await implementations.First().TryGoToDefinitionAsync();
+                return new GoToResult(isSuccess, !isSuccess ? defaultErrorMessage : null);
+            }
+            if (implementations.Length == 0)
+            {
+                isSuccess = await symbol.TryGoToDefinitionAsync();
+                return new GoToResult(isSuccess, !isSuccess ? defaultErrorMessage : null);
             }
 
-            if(symbol is IMethodSymbol methodSymbol)
-            {
-                var implementations = methodSymbol.GetImplementations().ToArray();
-                if (implementations.Length == 1)
-                {
-                    isSuccess = await implementations.First().TryGoToDefinitionAsync();
-                    return new GoToResult(isSuccess, !isSuccess ? defaultErrorMessage : null);
-                }
-                if (implementations.Length == 0)
-                {
-                    isSuccess = await methodSymbol.TryGoToDefinitionAsync();
-                    return new GoToResult(isSuccess, !isSuccess ? defaultErrorMessage : null);
-                }
-
-                var dialog = new ListSymbolDialog(implementations);
-                dialog.Owner = Application.Current.MainWindow;
-                dialog.ShowModal();
-                return new GoToResult(true, null);
-            }
-
-            isSuccess = await symbol.TryGoToDefinitionAsync();
-            return new GoToResult(isSuccess, !isSuccess ? defaultErrorMessage : null);
+            var dialog = new ListSymbolDialog(implementations.ToArray());
+            dialog.Owner = Application.Current.MainWindow;
+            dialog.ShowModal();
+            return new GoToResult(true, null);
         }
 
         /// <summary> Получить список методов, которые считаются методами расширения </summary>

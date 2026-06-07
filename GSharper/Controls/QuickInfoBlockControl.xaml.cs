@@ -80,6 +80,9 @@ namespace GSharper.Controls
 
         public QuickInfoBlockControl SetData(IAsyncQuickInfoSession session, ISymbol symbol, SyntaxNode node, bool hideOther = true)
         {
+            if (_symbol == null && symbol == null)
+                return this;
+
             _cancellationTokenSetData?.Cancel();
             _cancellationTokenSetData = new CancellationTokenSource();
             _progressBarLoading.Visibility = Visibility.Visible;
@@ -503,28 +506,7 @@ namespace GSharper.Controls
 
         private ISymbol[] GetBaseTypes()
         {
-            var typeSymbol = _symbol as ITypeSymbol;
-            var methodSymbol = _symbol as IMethodSymbol;
-            var propertySymbol = _symbol as IPropertySymbol;
-            if (methodSymbol != null && (methodSymbol.MethodKind == MethodKind.Constructor || methodSymbol.MethodKind == MethodKind.StaticConstructor))
-            {
-                typeSymbol = methodSymbol.ContainingType;
-            }
-            if (typeSymbol != null)
-            {
-                return typeSymbol.GetBaseSymbols().Where(x => !x.IsKeyword()).ToArray();
-            }
-
-            if (methodSymbol != null)
-            {
-                return methodSymbol.GetBaseSymbols().ToArray();
-            }
-            if (propertySymbol != null)
-            {
-                return propertySymbol.GetBaseSymbols().ToArray();
-            }
-
-            return Array.Empty<ISymbol>();
+            return _symbol.GetBaseSymbols().Where(x => !x.IsKeyword()).ToArray();
         }
 
         private void ApplyBaseTypes()
@@ -595,41 +577,12 @@ namespace GSharper.Controls
 
         private IMethodSymbol[] GetOverloadingMethods()
         {
-            var methodSymbol = _symbol as IMethodSymbol;
-            if (methodSymbol != null)
-            {
-                return methodSymbol.GetOverloadingMethods().ToArray();
-            }
-
-            return Array.Empty<IMethodSymbol>();
+            return (_symbol as IMethodSymbol)?.GetOverloadingMethods()?.ToArray() ?? Array.Empty<IMethodSymbol>();
         }
 
         private ISymbol[] GetImplementations()
         {
-            var typeSymbol = _symbol as ITypeSymbol;
-            var methodSymbol = _symbol as IMethodSymbol;
-            var propertySymbol = _symbol as IPropertySymbol;
-            if (methodSymbol != null && (methodSymbol.MethodKind == MethodKind.Constructor || methodSymbol.MethodKind == MethodKind.StaticConstructor))
-            {
-                typeSymbol = methodSymbol.ContainingType;
-            }
-
-            if (typeSymbol != null)
-            {
-                return typeSymbol.GetImplementations().ToArray();
-            }
-
-            if (methodSymbol != null)
-            {
-                return methodSymbol.GetImplementations().ToArray();
-            }
-
-            if (propertySymbol != null)
-            {
-                return propertySymbol.GetImplementations().ToArray();
-            }
-
-            return Array.Empty<ISymbol>();
+            return _symbol.GetImplementations().ToArray();
         }
 
         private void ApplyImplementations()

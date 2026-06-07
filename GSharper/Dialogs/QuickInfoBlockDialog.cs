@@ -1,8 +1,10 @@
 ﻿using GSharper.Assistants;
 using GSharper.Controls;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Elfie.Model;
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.VisualStudio.ComponentModelHost;
+using Microsoft.VisualStudio.Editor;
 using Microsoft.VisualStudio.LanguageServices;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
@@ -10,6 +12,7 @@ using Microsoft.VisualStudio.Text.Editor;
 using System;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media;
@@ -30,6 +33,10 @@ namespace GSharper.Dialogs
     [Guid("bf438e32-f64a-4043-ada2-1e5197c8316a")]
     public class QuickInfoBlockDialog : ToolWindowPane
     {
+        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        private static extern int GetClassName(IntPtr hWnd, StringBuilder lpClassName, int nMaxCount);
+
+
         private QuickInfoBlockControl control = null;
 
         private const int WM_LBUTTONUP = 0x0202;
@@ -55,49 +62,63 @@ namespace GSharper.Dialogs
         {
             if (msg.message == WM_LBUTTONUP)
             {
-                var symbol = GetSymbolUnderCursor();
-                if (symbol != null)
+                var wpfTextView = GetWpfTextView(msg);
+                if (wpfTextView != null)
                 {
-                    if (_symbol != symbol && !SymbolEqualityComparer.Default.Equals(_symbol, symbol))
+                    var symbol = Assistant.GetSymbolUnderCursor(wpfTextView);
+                    if (symbol != null)
                     {
-                        _symbol = symbol;
-                        control.SetData(null, symbol, null, false);
+                        if (_symbol != symbol && !SymbolEqualityComparer.Default.Equals(_symbol, symbol))
+                        {
+                            _symbol = symbol;
+                            control.SetData(null, symbol, null, false);
+                        }
                     }
                 }
             }
         }
 
-        private ISymbol GetSymbolUnderCursor()
+        private IWpfTextView GetWpfTextView(MSG msg)
         {
-            IWpfTextView textView = Assistant.GetActiveTextView();
-            if (textView == null) 
-                return null;
+            HwndSource hwndSource = HwndSource.FromHwnd(msg.hwnd);
+            if (hwndSource != null && hwndSource.RootVisual is Visual rootVisual)
+            {
+                int x = (short)(msg.lParam.ToInt32() & 0xFFFF);
+                int y = (short)((msg.lParam.ToInt32() >> 16) & 0xFFFF);
+                Point clickPoint = new Point(x, y);
 
-            SnapshotPoint caretPoint = textView.Caret.Position.BufferPosition;
-            int position = caretPoint.Position;
+                DependencyObject hitElement = null;
+                VisualTreeHelper.HitTest(
+                    rootVisual,
+                    null,
+                    result => { hitElement = result.VisualHit; return HitTestResultBehavior.Stop; },
+                    new PointHitTestParameters(clickPoint)
+                    );
 
-            var componentModel = (IComponentModel)GetService(typeof(SComponentModel));
-            var workspace = componentModel.GetService<VisualStudioWorkspace>();
-            if (workspace == null) 
-                return null;
+                IWpfTextView wpfTextView = FindWpfTextViewInAncestors(hitElement);
 
-            Document document = caretPoint.Snapshot.GetOpenDocumentInCurrentContextWithChanges();
-            if (document == null) 
-                return null;
+                if (wpfTextView != null)
+                {
+                    if (wpfTextView.Roles.Contains(PredefinedTextViewRoles.Document))
+                    {
+                        return wpfTextView;
+                    }
+                }
+            }
 
-            if (!document.TryGetSemanticModel(out var semanticModel))
-                return null;
+            return null;
+        }
 
-            if (!document.TryGetSyntaxRoot(out var root))
-                return null;
+        private IWpfTextView FindWpfTextViewInAncestors(DependencyObject element)
+        {
+            while (element != null)
+            {
+                if (element is IWpfTextViewHost host) return host.TextView;
+                if (element is IWpfTextView textView) return textView;
 
-            SyntaxNode node = root.FindToken(position).Parent;
-            if (node == null)
-                return null;
-
-            SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(node);
-            ISymbol symbol = symbolInfo.Symbol ?? symbolInfo.CandidateSymbols.FirstOrDefault() ?? semanticModel.GetDeclaredSymbol(node);
-            return symbol;
+                element = VisualTreeHelper.GetParent(element);
+            }
+            return null;
         }
 
         protected override void Dispose(bool disposing)
