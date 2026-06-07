@@ -61,7 +61,6 @@ namespace GSharper.Extensions
                                     return list.ToArray();
                                 });
 
-
                                 foreach (var symbol in symbols)
                                 {
                                     yield return symbol;

@@ -135,11 +135,19 @@
 			</Strings>
 		</Button>
 
-		<Button guid="guidGSharperPackageCmdSet" id="TriggerGoToImplementationsCommandId" priority="0x0110" type="Button">
+		<Button guid="guidGSharperPackageCmdSet" id="TriggerGoToImplementationsCommandId" priority="0x0111" type="Button">
 			<Parent guid="guidGSharperPackageCmdSet" id="GSharperSubMenu" />
 			<Strings>
 				<ButtonText>Декомпилировать пакеты</ButtonText>
-				<LocCanonicalName>.GSharper.TriggerGoToImplementationsCommand</LocCanonicalName>
+				<LocCanonicalName>.GSharper.triggerGoToImplementationsCommand</LocCanonicalName>
+			</Strings>
+		</Button>
+
+		<Button guid="guidGSharperPackageCmdSet" id="TriggerGoToBaseTypesCommandId" priority="0x0112" type="Button">
+			<Parent guid="guidGSharperPackageCmdSet" id="GSharperSubMenu" />
+			<Strings>
+				<ButtonText>Декомпилировать пакеты</ButtonText>
+				<LocCanonicalName>.GSharper.triggerGoToBaseTypesCommand</LocCanonicalName>
 			</Strings>
 		</Button>
 		
@@ -195,6 +203,7 @@
 		<IDSymbol name="ShowChnagesBranchCommandId" value="0x0109" />
 		<IDSymbol name="ShowHistoryFileCommandId" value="0x0110" />
 		<IDSymbol name="TriggerGoToImplementationsCommandId" value="0x0111" />
+		<IDSymbol name="TriggerGoToBaseTypesCommandId" value="0x0112" />
 
 		<IDSymbol name="MyGitGroup" value="0x1150" />
 	  <IDSymbol value="256" name="cmdidQuickInfoBlockDialogCommand" />

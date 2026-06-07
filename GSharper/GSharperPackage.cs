@@ -67,6 +67,7 @@ namespace GSharper
             await ShowChnagesBranchCommand.InitializeAsync(this, 0x0109);
             await ShowHistoryFileCommand.InitializeAsync(this, 0x0110);
             await TriggerGoToImplementationsCommand.InitializeAsync(this, 0x0111);
+            await TriggerGoToBaseTypesCommand.InitializeAsync(this, 0x0112);
         }
 
         #endregion

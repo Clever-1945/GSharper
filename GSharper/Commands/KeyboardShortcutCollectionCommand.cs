@@ -21,7 +21,7 @@ namespace GSharper.Commands
             shortcut["Edit.FormatSelection"] = "Текстовый редактор::Ctrl+Alt+L";
 
             // перейти к базовому
-            shortcut["Edit.GoToBase"] = "Текстовый редактор::Ctrl+U";
+            shortcut["GSharper.triggerGoToBaseTypesCommand"] = "Текстовый редактор::Ctrl+U";
 
             // Показать окно поиском типов
             shortcut["GSharper.triggerSearchDialog"] = "Текстовый редактор::Ctrl+N";

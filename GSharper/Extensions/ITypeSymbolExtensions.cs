@@ -73,7 +73,7 @@ namespace GSharper.Extensions
             if (!methodSymbol.IsExtensionMethod)
                 return false;
 
-            if (methodSymbol.Parameters.Length == 0)
+            if (methodSymbol.Parameters.Length < 1)
                 return false;
 
             try

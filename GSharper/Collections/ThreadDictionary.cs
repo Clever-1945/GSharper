@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.VisualStudio.Debugger.Interop;
+using System;
 using System.Collections.Generic;
 
 namespace GSharper.Collections
@@ -54,7 +55,7 @@ namespace GSharper.Collections
             {
                 nextValues[pair.Key] = pair.Value;
             }
-
+            nextValues[key] = value;
             return nextValues;
         }
 
