@@ -56,6 +56,8 @@ namespace GSharper
             // Do any initialization that requires the UI thread after switching to the UI thread.
             await this.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
 
+            var contextMenuId = new Guid("545A271A-937C-4DAA-951F-CF155A82C3FA");
+
             await KeyboardShortcutCollectionCommand.InitializeAsync(this, 0x0101);
             await KeyboardShortcutRestart.InitializeAsync(this, 0x0102);
             await TriggerSearchCommand.InitializeAsync(this, 0x0103);
@@ -64,10 +66,11 @@ namespace GSharper
             await TriggerChangeCaseCommand.InitializeAsync(this, 0x0106);
             await TriggerRebuildProjectsCommand.InitializeAsync(this, 0x0107);
             await TriggerDecompilationPackagesCommand.InitializeAsync(this, 0x0108);
-            await ShowChnagesBranchCommand.InitializeAsync(this, 0x0109);
-            await ShowHistoryFileCommand.InitializeAsync(this, 0x0110);
             await TriggerGoToImplementationsCommand.InitializeAsync(this, 0x0111);
             await TriggerGoToBaseTypesCommand.InitializeAsync(this, 0x0112);
+
+            await ShowChnagesBranchCommand.InitializeAsync(this, 0x0109, contextMenuId);
+            await ShowHistoryFileCommand.InitializeAsync(this, 0x0110, contextMenuId);
         }
 
         #endregion

@@ -17,15 +17,18 @@ namespace GSharper.Commands
         /// <summary>
         /// Command menu group (command set GUID).
         /// </summary>
-        public static readonly Guid CommandSet = new Guid("578213b0-a1b9-49ca-924d-b5488d8e74e4");
+        public static Guid CommandSet = new Guid("578213b0-a1b9-49ca-924d-b5488d8e74e4");
 
         /// <summary>
         /// VS Package that provides this command, not null.
         /// </summary>
         public AsyncPackage package;
 
-        public static async Task<T> InitializeAsync(AsyncPackage package, int commandId)
+        public static async Task<T> InitializeAsync(AsyncPackage package, int commandId, Guid? commandSet = null)
         {
+            if (commandSet != null)
+                CommandSet = commandSet.Value;
+
             OleMenuCommandService commandService = await package.GetServiceAsync(typeof(IMenuCommandService)) as OleMenuCommandService;
 
             var instace = Activator.CreateInstance(typeof(T)) as T;

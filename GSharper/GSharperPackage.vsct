@@ -119,26 +119,10 @@
 			</Strings>
 		</Button>
 
-		<Button guid="guidGSharperPackageCmdSet" id="ShowChnagesBranchCommandId" priority="0x0109" type="Button">
-			<Parent guid="guidGSharperPackageCmdSet" id="GSharperSubMenu" />
-			<Strings>
-				<ButtonText>Декомпилировать пакеты</ButtonText>
-				<LocCanonicalName>.GSharper.showChnagesBranchCommand</LocCanonicalName>
-			</Strings>
-		</Button>
-
-		<Button guid="guidGSharperPackageCmdSet" id="ShowHistoryFileCommandId" priority="0x0110" type="Button">
-			<Parent guid="guidGSharperPackageCmdSet" id="GSharperSubMenu" />
-			<Strings>
-				<ButtonText>Декомпилировать пакеты</ButtonText>
-				<LocCanonicalName>.GSharper.showHistoryFileCommand</LocCanonicalName>
-			</Strings>
-		</Button>
-
 		<Button guid="guidGSharperPackageCmdSet" id="TriggerGoToImplementationsCommandId" priority="0x0111" type="Button">
 			<Parent guid="guidGSharperPackageCmdSet" id="GSharperSubMenu" />
 			<Strings>
-				<ButtonText>Декомпилировать пакеты</ButtonText>
+				<ButtonText>Перейти к реализации</ButtonText>
 				<LocCanonicalName>.GSharper.triggerGoToImplementationsCommand</LocCanonicalName>
 			</Strings>
 		</Button>
@@ -146,26 +130,28 @@
 		<Button guid="guidGSharperPackageCmdSet" id="TriggerGoToBaseTypesCommandId" priority="0x0112" type="Button">
 			<Parent guid="guidGSharperPackageCmdSet" id="GSharperSubMenu" />
 			<Strings>
-				<ButtonText>Декомпилировать пакеты</ButtonText>
+				<ButtonText>Перейти к базовому</ButtonText>
 				<LocCanonicalName>.GSharper.triggerGoToBaseTypesCommand</LocCanonicalName>
 			</Strings>
 		</Button>
 		
 		<!--   -->
-		<Button guid="guidGSharperPackageContextCmdSet" id="TriggerHistoryFileDialogId" priority="0x0101" type="Button">
-			<Parent guid="guidGSharperPackageContextCmdSet" id="SharperSubContextMenu" />
-			<Strings>
-				<ButtonText>Показать историю изменений...</ButtonText>
-				<LocCanonicalName>.GSharper.triggerHistoryFileDialog</LocCanonicalName>
-			</Strings>
-		</Button>
-		<Button guid="guidGSharperPackageContextCmdSet" id="TriggerShowChnagesBranchId" priority="0x0102" type="Button">
+
+		<Button guid="guidGSharperPackageContextCmdSet" id="ShowChnagesBranchCommandId" priority="0x0109" type="Button">
 			<Parent guid="guidGSharperPackageContextCmdSet" id="SharperSubContextMenu" />
 			<Strings>
 				<ButtonText>Сравнить с бранчем...</ButtonText>
-				<LocCanonicalName>.GSharper.triggerShowChnagesBranch</LocCanonicalName>
+				<LocCanonicalName>.GSharper.showChnagesBranchCommand</LocCanonicalName>
 			</Strings>
-		</Button>	
+		</Button>
+
+		<Button guid="guidGSharperPackageContextCmdSet" id="ShowHistoryFileCommandId" priority="0x0110" type="Button">
+			<Parent guid="guidGSharperPackageContextCmdSet" id="SharperSubContextMenu" />
+			<Strings>
+				<ButtonText>История изменения файла...</ButtonText>
+				<LocCanonicalName>.GSharper.showHistoryFileCommand</LocCanonicalName>
+			</Strings>
+		</Button>
 
 	</Buttons>
 	  
@@ -200,8 +186,6 @@
 		<IDSymbol name="TriggerChangeCaseCommandId" value="0x0106" />
 		<IDSymbol name="TriggerRebuildProjectsCommandId" value="0x0107" />
 		<IDSymbol name="TriggerDecompilationPackagesCommandId" value="0x0108" />
-		<IDSymbol name="ShowChnagesBranchCommandId" value="0x0109" />
-		<IDSymbol name="ShowHistoryFileCommandId" value="0x0110" />
 		<IDSymbol name="TriggerGoToImplementationsCommandId" value="0x0111" />
 		<IDSymbol name="TriggerGoToBaseTypesCommandId" value="0x0112" />
 
@@ -212,8 +196,9 @@
 	  <GuidSymbol name="guidGSharperPackageContextCmdSet" value="{545A271A-937C-4DAA-951F-CF155A82C3FA}">
 		  <IDSymbol name="SharperSubContextMenu" value="0x1000" />
 		  <IDSymbol name="SharperContextMenu" value="0x1010" />
-		  <IDSymbol name="TriggerHistoryFileDialogId" value="0x0101" />
-		  <IDSymbol name="TriggerShowChnagesBranchId" value="0x0102" />
+
+		  <IDSymbol name="ShowChnagesBranchCommandId" value="0x0109" />
+		  <IDSymbol name="ShowHistoryFileCommandId" value="0x0110" />
 	  </GuidSymbol>
 
 
