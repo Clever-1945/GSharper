@@ -1,10 +1,8 @@
 ﻿using GSharper.Collections;
-using GSharper.Helpers;
+using GSharper.Enums;
 using GSharper.Models;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.Elfie.Model;
 using Microsoft.VisualStudio.LanguageServices;
-using Microsoft.VisualStudio.Shell.Interop;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,6 +14,13 @@ namespace GSharper.Extensions
     public static class VisualStudioWorkspaceExtensions
     {
         private static ThreadDictionary<MetadataReference, SymbolProjectDefinition[]> _symbols = new ThreadDictionary<MetadataReference, SymbolProjectDefinition[]>();
+        private static ThreadDictionary<MetadataReference, SymbolProjectDefinition[]> _symbolsITypeSymbol = new ThreadDictionary<MetadataReference, SymbolProjectDefinition[]>();
+        private static ThreadDictionary<MetadataReference, SymbolProjectDefinition[]> _symbolsIEventSymbol = new ThreadDictionary<MetadataReference, SymbolProjectDefinition[]>();
+        private static ThreadDictionary<MetadataReference, SymbolProjectDefinition[]> _symbolsIPropertySymbol = new ThreadDictionary<MetadataReference, SymbolProjectDefinition[]>();
+        private static ThreadDictionary<MetadataReference, SymbolProjectDefinition[]> _symbolsIFieldSymbol = new ThreadDictionary<MetadataReference, SymbolProjectDefinition[]>();
+        private static ThreadDictionary<MetadataReference, SymbolProjectDefinition[]> _symbolsIParameterSymbol = new ThreadDictionary<MetadataReference, SymbolProjectDefinition[]>();
+        private static ThreadDictionary<MetadataReference, SymbolProjectDefinition[]> _symbolsIMethodSymbol = new ThreadDictionary<MetadataReference, SymbolProjectDefinition[]>();
+        private static ThreadDictionary<MetadataReference, SymbolProjectDefinition[]> _symbolsILocalSymbol = new ThreadDictionary<MetadataReference, SymbolProjectDefinition[]>();
 
         /// <summary>
         /// Базовый метод для поиска символов
@@ -23,7 +28,7 @@ namespace GSharper.Extensions
         /// <param name="_workspace"></param>
         /// <param name="isExternal">Искать внутри или во внешних библиотеках</param>
         /// <returns></returns>
-        public static IEnumerable<SymbolProjectDefinition> GetSymbols(this VisualStudioWorkspace _workspace, bool isExternal)
+        public static IEnumerable<SymbolProjectDefinition> GetSymbols(this VisualStudioWorkspace _workspace, bool isExternal, SymbolTypeInterface symbolType = SymbolTypeInterface.None)
         {            
             var _cancellationTokenSource = new CancellationTokenSource();
             try
@@ -45,23 +50,7 @@ namespace GSharper.Extensions
                         {
                             foreach (var reference in compilation.References)
                             {
-                                var symbols = _symbols.GetOrAdd(reference, (r) =>
-                                {
-                                    var list = new List<SymbolProjectDefinition>();
-                                    var assemblySymbol = compilation.GetAssemblyOrModuleSymbol(reference) as IAssemblySymbol;
-                                    if (assemblySymbol != null)
-                                    {
-                                        var globalNamespace = assemblySymbol.GlobalNamespace;
-                                        foreach (var symbol in ForeachSymbol(globalNamespace))
-                                        {
-                                            list.Add(new SymbolProjectDefinition(symbol, project, reference, compilation));
-                                        }
-                                    }
-
-                                    return list.ToArray();
-                                });
-
-                                foreach (var symbol in symbols)
+                                foreach (var symbol in _workspace.GetSymbolsFromReference(reference, project, compilation, symbolType))
                                 {
                                     yield return symbol;
                                 }
@@ -74,6 +63,89 @@ namespace GSharper.Extensions
             {
                 _cancellationTokenSource.Cancel();
             }
+        }
+
+        private static SymbolProjectDefinition[] GetSymbolsFromReference(this VisualStudioWorkspace _workspace, MetadataReference reference, Microsoft.CodeAnalysis.Project project, Compilation compilation, SymbolTypeInterface symbolType)
+        {
+            if (symbolType == SymbolTypeInterface.ITypeSymbol)
+            {
+                return _symbolsITypeSymbol.GetOrAdd(reference, (r) =>
+                {
+                    return _workspace.GetSymbolsFromReferenceDefault(r, project, compilation).Where(x => x.Symbol is ITypeSymbol).ToArray();
+                });
+            }
+
+            if (symbolType == SymbolTypeInterface.IEventSymbol)
+            {
+                return _symbolsIEventSymbol.GetOrAdd(reference, (r) =>
+                {
+                    return _workspace.GetSymbolsFromReferenceDefault(r, project, compilation).Where(x => x.Symbol is IEventSymbol).ToArray();
+                });
+            }
+
+            if (symbolType == SymbolTypeInterface.IPropertySymbol)
+            {
+                return _symbolsIPropertySymbol.GetOrAdd(reference, (r) =>
+                {
+                    return _workspace.GetSymbolsFromReferenceDefault(r, project, compilation).Where(x => x.Symbol is IPropertySymbol).ToArray();
+                });
+            }
+
+            if (symbolType == SymbolTypeInterface.IFieldSymbol)
+            {
+                return _symbolsIFieldSymbol.GetOrAdd(reference, (r) =>
+                {
+                    return _workspace.GetSymbolsFromReferenceDefault(r, project, compilation).Where(x => x.Symbol is IFieldSymbol).ToArray();
+                });
+            }
+
+            if (symbolType == SymbolTypeInterface.IParameterSymbol)
+            {
+                return _symbolsIParameterSymbol.GetOrAdd(reference, (r) =>
+                {
+                    return _workspace.GetSymbolsFromReferenceDefault(r, project, compilation).Where(x => x.Symbol is IParameterSymbol).ToArray();
+                });
+            }
+
+            if (symbolType == SymbolTypeInterface.ILocalSymbol)
+            {
+                return _symbolsILocalSymbol.GetOrAdd(reference, (r) =>
+                {
+                    return _workspace.GetSymbolsFromReferenceDefault(r, project, compilation).Where(x => x.Symbol is ILocalSymbol).ToArray();
+                });
+            }
+
+            if (symbolType == SymbolTypeInterface.IMethodSymbol)
+            {
+                return _symbolsIMethodSymbol.GetOrAdd(reference, (r) =>
+                {
+                    return _workspace.GetSymbolsFromReferenceDefault(r, project, compilation).Where(x => x.Symbol is IMethodSymbol).ToArray();
+                });
+            }
+
+            return _workspace.GetSymbolsFromReferenceDefault(reference, project, compilation);
+        }
+
+        private static SymbolProjectDefinition[] GetSymbolsFromReferenceDefault(this VisualStudioWorkspace _workspace, MetadataReference reference, Microsoft.CodeAnalysis.Project project, Compilation compilation)
+        {
+            var symbols = _symbols.GetOrAdd(reference, (r) =>
+            {
+                var list = new List<SymbolProjectDefinition>();
+                var assemblySymbol = compilation.GetAssemblyOrModuleSymbol(reference) as IAssemblySymbol;
+                if (assemblySymbol != null)
+                {
+                    var globalNamespace = assemblySymbol.GlobalNamespace;
+                    foreach (var symbol in ForeachSymbol(globalNamespace))
+                    {
+                        list.Add(new SymbolProjectDefinition(symbol, project, reference, compilation));
+                    }
+                }
+
+                return list.ToArray();
+            });
+
+
+            return symbols;
         }
 
         /// <summary>

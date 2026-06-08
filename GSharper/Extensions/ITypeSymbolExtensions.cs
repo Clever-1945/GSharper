@@ -38,7 +38,7 @@ namespace GSharper.Extensions
         /// <returns></returns>
         public static IEnumerable<ITypeSymbol> GetImplementations(this ITypeSymbol typeSymbol, bool isExternal)
         {
-            foreach(var s in Assistant.GetWorkspace().GetSymbols(isExternal))
+            foreach(var s in Assistant.GetWorkspace().GetSymbols(isExternal, Enums.SymbolTypeInterface.ITypeSymbol))
             {
                 if (s.Symbol is ITypeSymbol _typeSymbol)
                 {

@@ -190,7 +190,7 @@
 		<IDSymbol name="TriggerGoToBaseTypesCommandId" value="0x0112" />
 
 		<IDSymbol name="MyGitGroup" value="0x1150" />
-	  <IDSymbol value="256" name="cmdidQuickInfoBlockDialogCommand" />
+		<IDSymbol value="256" name="cmdidQuickInfoBlockDialogCommand" />
     </GuidSymbol>
 
 	  <GuidSymbol name="guidGSharperPackageContextCmdSet" value="{545A271A-937C-4DAA-951F-CF155A82C3FA}">

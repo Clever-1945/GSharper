@@ -158,7 +158,7 @@ namespace GSharper.Extensions
         /// <returns></returns>
         public static IEnumerable<IMethodSymbol> GetOverloadingMethods(this IMethodSymbol methodSymbol, bool isExternal)
         {
-            foreach(var symbol in Assistant.GetWorkspace().GetSymbols(isExternal))
+            foreach(var symbol in Assistant.GetWorkspace().GetSymbols(isExternal, Enums.SymbolTypeInterface.IMethodSymbol))
             {
                 if (symbol.Symbol is IMethodSymbol checkMethodSymbol)
                 {

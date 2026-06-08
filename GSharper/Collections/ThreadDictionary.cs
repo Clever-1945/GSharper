@@ -83,5 +83,7 @@ namespace GSharper.Collections
 
             return value;
         }
+
+        public IEnumerable<TV> Values => _values.Values;
     }
 }
