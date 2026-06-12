@@ -8,6 +8,7 @@ using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.Shell;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -72,7 +73,6 @@ namespace GSharper.Controls
         public QuickInfoBlockControl()
         {
             InitializeComponent();
-            // this.AddHandler(Hyperlink.ClickEvent, new RoutedEventHandler(OnHyperlinkClicked), true);
             this.AddHandler(Hyperlink.MouseDownEvent, new MouseButtonEventHandler(OnHyperlinkClicked), true);
             this.Loaded += OnLoaded;
             _progressBarLoading.Visibility = Visibility.Collapsed;
@@ -125,6 +125,7 @@ namespace GSharper.Controls
             _symbol = symbol;
             _node = node;
             _session = session;
+
             _commentStringXml = _symbol?.GetDocumentationCommentXml();
             _commentXml = CommentXml();
             _expressionToEvaluate = GetExpressionToEvaluate();
@@ -137,6 +138,7 @@ namespace GSharper.Controls
             _extensionTypes = _extensions.Select(x => x.ContainingType).Distinct().ToArray();
 
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
             Render();
         }
 
@@ -165,8 +167,7 @@ namespace GSharper.Controls
                 if (link.Tag is HyperlinkTagGoToSymbols goToSymbols)
                 {
                     var dialog = new ListSymbolDialog(goToSymbols.Symbols);
-                    dialog.Owner = Application.Current.MainWindow;
-                    dialog.ShowModal();
+                    dialog.ShowInCenter();
                 }
             }
 
@@ -189,6 +190,11 @@ namespace GSharper.Controls
 
         private ISymbol GetSymbolByExpression(string expression)
         {
+            if (Assistant.GetDte().Debugger.CurrentMode != EnvDTE.dbgDebugMode.dbgBreakMode)
+            {
+                return null;
+            }                
+
             if (String.IsNullOrWhiteSpace(expression))
             {
                 return null;

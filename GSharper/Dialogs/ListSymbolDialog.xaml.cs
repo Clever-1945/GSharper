@@ -24,7 +24,7 @@ namespace GSharper.Dialogs
     /// <summary>
     /// Логика взаимодействия для ListSymbolDialog.xaml
     /// </summary>
-    public partial class ListSymbolDialog : DialogWindow
+    public partial class ListSymbolDialog : Window
     {
         private ISymbol[] _symbols;
 
@@ -46,11 +46,6 @@ namespace GSharper.Dialogs
 
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
-            double screenHeight = SystemParameters.PrimaryScreenHeight;
-            this.Top = screenHeight * 0.25;
-            double screenWidth = SystemParameters.PrimaryScreenWidth;
-            this.Left = (screenWidth - this.Width) / 2;
-
             var symbols = _symbols.Select(x => new SymbolModel(x)).ToArray();
             _listViewSymbolControl.SetSymbols(symbols);
         }

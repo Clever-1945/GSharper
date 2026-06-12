@@ -20,7 +20,10 @@ namespace GSharper.Extensions
                 {
                     foreach (ProjectItem projectItem in FindProjectItems(project.ProjectItems))
                     {
-                        yield return projectItem;
+                        if (projectItem.Kind == Constants.vsProjectItemKindPhysicalFile)
+                        {
+                            yield return projectItem;
+                        }
                     }
                 }
             }
@@ -35,8 +38,8 @@ namespace GSharper.Extensions
                 if (projectItem.FileCount < 1)
                     continue;
 
-                if (projectItem.GetIsDirty())
-                    continue;
+                // if (projectItem.GetIsDirty())
+                //     continue;
 
                 var listFile = projectItem.GetFiles().ToArray();
                 if (!listFile.Any())
@@ -54,10 +57,17 @@ namespace GSharper.Extensions
             {
                 foreach (ProjectItem projectItem in projectItems)
                 {
-                    yield return projectItem;
+                    if (projectItem.Kind == Constants.vsProjectItemKindPhysicalFile)
+                    {
+                        yield return projectItem;
+                    }
+                        
                     foreach (ProjectItem subProjectItem in FindProjectItems(projectItem.ProjectItems))
                     {
-                        yield return subProjectItem;
+                        if (subProjectItem.Kind == Constants.vsProjectItemKindPhysicalFile)
+                        {
+                            yield return subProjectItem;
+                        }
                     }                    
                 }
             }

@@ -1,4 +1,4 @@
-﻿<ui:DialogWindow  
+﻿<Window  
     x:Class="GSharper.Dialogs.SelectAssemblyDialog"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -16,7 +16,7 @@
     Height="450" 
     Width="800">
 
-    <ui:DialogWindow.Resources>
+    <Window.Resources>
         <Style TargetType="Button">
             <Setter Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.DockTargetButtonBackgroundBeginKey}}"/>
             <Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
@@ -35,7 +35,7 @@
                 </Setter.Value>
             </Setter>
         </Style>
-    </ui:DialogWindow.Resources>
+    </Window.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
@@ -122,4 +122,4 @@
             Click="OnCancel"
             Content="Отмена"></Button>
     </Grid>
-</ui:DialogWindow>
+</Window>

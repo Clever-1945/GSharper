@@ -1,7 +1,10 @@
 ﻿using EnvDTE;
 using EnvDTE80;
-using Microsoft.VisualStudio.Shell;
+using GSharper.Controls;
 using GSharper.Dialogs;
+using GSharper.Extensions;
+using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
 using System;
 using System.Windows;
 
@@ -19,8 +22,7 @@ namespace GSharper.Commands
         public override void Execute(object sender, EventArgs e)
         {
             var dialog = _searchDialog ?? (_searchDialog = new SearchDialog());
-            dialog.Owner = Application.Current.MainWindow;
-            dialog.ShowModal();
+            dialog.ShowInCenter();
         }
     }
 }

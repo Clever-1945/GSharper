@@ -1,32 +1,26 @@
 ﻿using EnvDTE;
 using EnvDTE80;
-using Microsoft.CodeAnalysis;
-using Microsoft.VisualStudio.ComponentModelHost;
-using Microsoft.VisualStudio.LanguageServices;
-using Microsoft.VisualStudio.PlatformUI;
-using Microsoft.VisualStudio.Shell;
-using GSharper.Controls;
 using GSharper.Enums;
 using GSharper.Extensions;
 using GSharper.Helpers;
 using GSharper.Interfaces;
 using GSharper.Models;
+using Microsoft.CodeAnalysis;
+using Microsoft.VisualStudio.ComponentModelHost;
+using Microsoft.VisualStudio.LanguageServices;
+using Microsoft.VisualStudio.Shell;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Input;
 
 namespace GSharper.Dialogs
 {
     /// <summary>
     /// Логика взаимодействия для SearchDialog.xaml
     /// </summary>
-    public partial class SearchDialog : DialogWindow
+    public partial class SearchDialog : System.Windows.Window
     {
         private SymbolFilterModel _symbolFilterModel;
 
@@ -34,6 +28,7 @@ namespace GSharper.Dialogs
         private IComponentModel _componentModel;
         private VisualStudioWorkspace _workspace;
         private CancellationTokenSource _cancellationTokenSource = null;
+        private ulong _searchId = 0;
 
         public SearchDialog()
         {
@@ -59,11 +54,6 @@ namespace GSharper.Dialogs
 
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
-            double screenHeight = SystemParameters.PrimaryScreenHeight;
-            this.Top = screenHeight * 0.25;
-            double screenWidth = SystemParameters.PrimaryScreenWidth;
-            this.Left = (screenWidth - this.Width) / 2;
-
             _listViewSymbolControl.OnEscape = () => this.Hide();
             _listViewSymbolControl.OnActive = (s) => this.GoToSymbol();
             _listViewSymbolControl.OnLeft = () => _typeSymbolControl.ToLeft();
@@ -78,16 +68,18 @@ namespace GSharper.Dialogs
 
         private void LoadSymbols()
         {
+            _searchId++;
+            var currentSearchId = _searchId;
             _cancellationTokenSource?.Cancel();
             _cancellationTokenSource = new CancellationTokenSource();
 
             var symbolFilter = _symbolFilterModel?.SymbolType ?? SymbolTypeFilter.Class;
             var isExternal = _symbolFilterModel?.IsExternal ?? false;
             var cancellationToken = _cancellationTokenSource.Token;
-            _listViewSymbolControl.StartAsync(async () => await LoadSymbolsAsync(isExternal, symbolFilter, cancellationToken));
+            _listViewSymbolControl.StartAsync(async () => await LoadSymbolsAsync(isExternal, symbolFilter, currentSearchId, cancellationToken));
         }
-
-        private async Task LoadSymbolsAsync(bool isExternal, SymbolTypeFilter symbolFilter, CancellationToken cancellationToken)
+        
+        private async Task LoadSymbolsAsync(bool isExternal, SymbolTypeFilter symbolFilter, ulong currentSearchId, CancellationToken cancellationToken)
         {
             var symbolModels = Array.Empty<SymbolModel>();
 
@@ -110,8 +102,12 @@ namespace GSharper.Dialogs
                 }
             }
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-            _listViewSymbolControl.Symbols = symbolModels;
-            _listViewSymbolControl.SearchPattern = _searchPattern;
+
+            if (currentSearchId == _searchId)
+            {
+                _listViewSymbolControl.Symbols = symbolModels;
+                _listViewSymbolControl.SearchPattern = _searchPattern;
+            }
         }
 
         private async Task GoToSymbol()
@@ -134,16 +130,15 @@ namespace GSharper.Dialogs
             {
                 var document = _workspace.CurrentSolution.GetDocument(location.SourceTree);
                 await _workspace.TryGoToDefinitionAsync(symbol.Symbol, document.Project, default);
-                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-                this.Hide();
             }
             else
             {
                 var project = _workspace.CurrentSolution.Projects.FirstOrDefault();
                 await _workspace.TryGoToDefinitionAsync(symbol.Symbol, project, default);
-                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-                this.Hide();
             }
+
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            this.Hide();
         }
     }
 }

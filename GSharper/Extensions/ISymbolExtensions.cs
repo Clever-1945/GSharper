@@ -737,8 +737,7 @@ namespace GSharper.Extensions
             }
 
             var dialog = new ListSymbolDialog(baseSymbols);
-            dialog.Owner = Application.Current.MainWindow;
-            dialog.ShowModal();
+            dialog.ShowInCenter();
             return new GoToResult(true, null);
         }
 
@@ -763,8 +762,7 @@ namespace GSharper.Extensions
             }
 
             var dialog = new ListSymbolDialog(implementations.ToArray());
-            dialog.Owner = Application.Current.MainWindow;
-            dialog.ShowModal();
+            dialog.ShowInCenter();
             return new GoToResult(true, null);
         }
 

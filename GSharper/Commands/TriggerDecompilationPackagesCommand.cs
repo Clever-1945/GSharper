@@ -1,5 +1,6 @@
 ﻿using GSharper.Assistants;
 using GSharper.Dialogs;
+using GSharper.Extensions;
 using System;
 using System.IO;
 using System.Threading;
@@ -17,8 +18,7 @@ namespace GSharper.Commands
         public override void Execute(object sender, EventArgs e)
         {
             var dialog = new SelectAssemblyDialog();
-            dialog.Owner = Application.Current.MainWindow;
-            dialog.ShowModal();
+            dialog.ShowInCenter();
             if (!dialog.IsOk)
                 return;
 

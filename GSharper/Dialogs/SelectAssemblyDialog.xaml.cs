@@ -1,21 +1,10 @@
 ﻿using GSharper.Assistants;
-using Microsoft.VisualStudio.PlatformUI;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection.Metadata;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 using static GSharper.Assistants.AssistantDecompile;
 
 namespace GSharper.Dialogs
@@ -23,7 +12,7 @@ namespace GSharper.Dialogs
     /// <summary>
     /// Логика взаимодействия для SelectAssemblyDialog.xaml
     /// </summary>
-    public partial class SelectAssemblyDialog : DialogWindow
+    public partial class SelectAssemblyDialog : Window
     {
         public bool IsOk { private set; get; }
 

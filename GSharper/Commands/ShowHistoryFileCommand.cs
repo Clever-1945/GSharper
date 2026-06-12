@@ -3,6 +3,7 @@ using System;
 using System.IO;
 using System.Windows;
 using GSharper.Assistants;
+using GSharper.Extensions;
 
 namespace GSharper.Commands
 {
@@ -19,8 +20,7 @@ namespace GSharper.Commands
             if (activeDocument != null && File.Exists(activeDocument.FullName))
             {
                 var dialog = new ShowHistoryFileDialog(activeDocument.FullName);
-                dialog.Owner = Application.Current.MainWindow;
-                dialog.ShowModal();
+                dialog.ShowInCenter(80);
             }
         }
     }

@@ -1,4 +1,4 @@
-﻿<ui:DialogWindow
+﻿<Window
     x:Class="GSharper.Dialogs.ShowHistoryFileDialog"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -113,4 +113,4 @@
             </DataGrid.Columns>
         </DataGrid>
     </Grid>
-</ui:DialogWindow>
+</Window>

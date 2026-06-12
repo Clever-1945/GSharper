@@ -1,48 +1,22 @@
-﻿using EnvDTE;
-using EnvDTE80;
-using Microsoft.CodeAnalysis;
-using Microsoft.Internal.VisualStudio.PlatformUI;
-using Microsoft.VisualStudio;
+﻿using Microsoft.CodeAnalysis;
 using Microsoft.VisualStudio.ComponentModelHost;
-using Microsoft.VisualStudio.ComponentModelHost;
-using Microsoft.VisualStudio.Editor;
-using Microsoft.VisualStudio.LanguageServices;
-using Microsoft.VisualStudio.OLE.Interop;
-using Microsoft.VisualStudio.PlatformUI;
 using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Shell.Interop;
-using Microsoft.VisualStudio.Text;
-using Microsoft.VisualStudio.Text.Classification;
-using Microsoft.VisualStudio.Text.Differencing;
-using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Utilities;
-using GSharper.Controls;
 using GSharper.Extensions;
 using GSharper.Helpers;
 using GSharper.Interfaces;
 using GSharper.Models;
-using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 
 namespace GSharper.Dialogs
 {
     /// <summary>
     /// Логика взаимодействия для ShowHistoryFileDialog.xaml
     /// </summary>
-    public partial class ShowHistoryFileDialog : DialogWindow, IAsyncControl
+    public partial class ShowHistoryFileDialog : Window, IAsyncControl
     {
         private readonly string _fileName;
         private readonly GitHelper _git;
@@ -71,9 +45,6 @@ namespace GSharper.Dialogs
 
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
-            this.Width = (this.Owner.Width / 100) * 80;
-            this.Height = (this.Owner.Height / 100) * 80;
-
             this.StartAsync(async () => await LoadHistoryAsync());
         }
 

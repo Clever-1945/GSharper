@@ -17,7 +17,7 @@ namespace GSharper.Dialogs
     /// <summary>
     /// Логика взаимодействия для ShowChnagesBranchDialog.xaml
     /// </summary>
-    public partial class ShowChnagesBranchDialog : DialogWindow, IAsyncControl
+    public partial class ShowChnagesBranchDialog : Window, IAsyncControl
     {
         private readonly string _contentDocument;
         private readonly EnvDTE.Document _activeDocument;
@@ -67,9 +67,6 @@ namespace GSharper.Dialogs
 
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
-            this.Width = (this.Owner.Width / 100) * 80;
-            this.Height = (this.Owner.Height / 100) * 80;
-
             _monacoEditorControl.OnSave = (text) =>
             {
                 EnvDTE.TextDocument textDoc = (EnvDTE.TextDocument)_activeDocument.Object("TextDocument");
