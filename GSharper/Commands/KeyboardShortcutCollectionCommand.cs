@@ -48,7 +48,9 @@ namespace GSharper.Commands
             shortcut["Debug.StepOut"] = "Везде::Shift+F11";
 
             // глобальный поиск текста
-            shortcut["Edit.GoToText"] = "Везде::Ctrl+Shift+F";
+            // shortcut["Edit.GoToText"] = "Везде::Ctrl+Shift+F";
+            shortcut["GSharper.triggerSearchTextCommand"] = "Везде::Ctrl+Shift+F";
+            // 
 
             return shortcut;
         }

@@ -134,7 +134,16 @@
 				<LocCanonicalName>.GSharper.triggerGoToBaseTypesCommand</LocCanonicalName>
 			</Strings>
 		</Button>
+
+		<Button guid="guidGSharperPackageCmdSet" id="TriggerSearchTextCommandId" priority="0x0113" type="Button">
+			<Parent guid="guidGSharperPackageCmdSet" id="GSharperSubMenu" />
+			<Strings>
+				<ButtonText>Полнотекстовый поиск</ButtonText>
+				<LocCanonicalName>.GSharper.triggerSearchTextCommand</LocCanonicalName>
+			</Strings>
+		</Button>
 		
+
 		<!--   -->
 
 		<Button guid="guidGSharperPackageContextCmdSet" id="ShowChnagesBranchCommandId" priority="0x0109" type="Button">
@@ -188,6 +197,7 @@
 		<IDSymbol name="TriggerDecompilationPackagesCommandId" value="0x0108" />
 		<IDSymbol name="TriggerGoToImplementationsCommandId" value="0x0111" />
 		<IDSymbol name="TriggerGoToBaseTypesCommandId" value="0x0112" />
+		<IDSymbol name="TriggerSearchTextCommandId" value="0x0113" />
 
 		<IDSymbol name="MyGitGroup" value="0x1150" />
 		<IDSymbol value="256" name="cmdidQuickInfoBlockDialogCommand" />

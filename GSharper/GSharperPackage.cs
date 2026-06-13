@@ -66,11 +66,13 @@ namespace GSharper
             await TriggerChangeCaseCommand.InitializeAsync(this, 0x0106);
             await TriggerRebuildProjectsCommand.InitializeAsync(this, 0x0107);
             await TriggerDecompilationPackagesCommand.InitializeAsync(this, 0x0108);
-            await TriggerGoToImplementationsCommand.InitializeAsync(this, 0x0111);
-            await TriggerGoToBaseTypesCommand.InitializeAsync(this, 0x0112);
-
+            
             await ShowChnagesBranchCommand.InitializeAsync(this, 0x0109, contextMenuId);
             await ShowHistoryFileCommand.InitializeAsync(this, 0x0110, contextMenuId);
+
+            await TriggerGoToImplementationsCommand.InitializeAsync(this, 0x0111);
+            await TriggerGoToBaseTypesCommand.InitializeAsync(this, 0x0112);
+            await TriggerSearchTextCommand.InitializeAsync(this, 0x0113);
         }
 
         #endregion

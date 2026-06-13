@@ -16,6 +16,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Threading.Tasks;
 
 namespace GSharper.Assistants
 {
@@ -200,6 +201,33 @@ namespace GSharper.Assistants
                     return new Guid(hashBytes);
                 }
             }
+        }
+
+        public static async Task MessageBox(string message)
+        {
+            var uiShell = await Microsoft.VisualStudio.Shell.ServiceProvider.GetGlobalServiceAsync(typeof(SVsUIShell)) as IVsUIShell;
+            if (uiShell == null) 
+                return;
+
+            Guid clsid = Guid.Empty;
+            int result;
+
+            // Этот метод вызывает родное окно. Текст в нем в современных версиях VS 
+            // копируется по Ctrl+C, но если вам нужно именно выделение мышкой, 
+            // студия использует внутренний TextBox, если строка превышает определенный лимит.
+            uiShell.ShowMessageBox(
+                0,
+                ref clsid,
+                System.Windows.Application.Current.MainWindow.Title,
+                message,
+                string.Empty,
+                0,
+                OLEMSGBUTTON.OLEMSGBUTTON_OK,
+                OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST,
+                OLEMSGICON.OLEMSGICON_INFO,
+                0, // 0 означает стандартное поведение
+                out result
+            );
         }
     }
 }

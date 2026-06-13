@@ -1,12 +1,6 @@
-﻿using EnvDTE;
-using EnvDTE80;
-using GSharper.Controls;
+﻿using System;
 using GSharper.Dialogs;
 using GSharper.Extensions;
-using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Shell.Interop;
-using System;
-using System.Windows;
 
 namespace GSharper.Commands
 {
