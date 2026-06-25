@@ -1,4 +1,5 @@
 ﻿using GSharper.Assistants;
+using GSharper.Collections;
 using GSharper.Dialogs;
 using GSharper.Models;
 using Microsoft.CodeAnalysis;
@@ -6,6 +7,7 @@ using Microsoft.VisualStudio.ComponentModelHost;
 using Microsoft.VisualStudio.PlatformUI;
 using Microsoft.VisualStudio.Shell;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -18,6 +20,10 @@ namespace GSharper.Extensions
 {
     public static class ISymbolExtensions
     {
+        private static ConcurrentDictionary<ISymbol, string> dictionaryNameForEqual = new ConcurrentDictionary<ISymbol, string>();
+        private static SymbolDisplayFormat formatForEqual = SymbolDisplayFormat.FullyQualifiedFormat;
+
+
         public static string GetResourceForName(this ISymbol symbol)
         {
             INamedTypeSymbol namedTypeSymbol = symbol as INamedTypeSymbol;
@@ -503,6 +509,21 @@ namespace GSharper.Extensions
             };
         }
 
+        /// <summary>
+        /// Получить имя символа для сравнения имплиментаций
+        /// </summary>
+        /// <param name="symbol"></param>
+        /// <returns></returns>
+        public static string GetNameForEqual(this ISymbol symbol)
+        {
+            if(symbol.Locations.Any(x => x.IsInSource))
+            {
+                return symbol.OriginalDefinition.ToDisplayString(formatForEqual);
+            }
+
+            return dictionaryNameForEqual.GetOrAdd(symbol, (s) => s.OriginalDefinition.ToDisplayString(formatForEqual));
+        }
+
         /// <summary> Сравнить 2 типизированных символа, с учетом дженерик типа </summary>
         /// <param name="symbolLeft"></param>
         /// <param name="symbolRight"></param>
@@ -515,8 +536,8 @@ namespace GSharper.Extensions
             if (symbolLeft == symbolRight)
                 return true;
 
-            string nameLeft = symbolLeft.OriginalDefinition.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-            string nameRight = symbolRight.OriginalDefinition.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            string nameLeft = symbolLeft.GetNameForEqual();
+            string nameRight = symbolRight.GetNameForEqual();
 
             bool areEqual = nameLeft == nameRight;
             if (areEqual)
