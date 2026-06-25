@@ -30,17 +30,12 @@ namespace GSharper.Commands
 
         public override void Execute(object sender, EventArgs e)
         {
-            var dte = Assistant.GetDte();
-            try
-            {
-                dte.ExecuteCommand("Tools.BlitzSearchThis");
-            }
-            catch 
+            Assistant.TryExecuteCommand("File.SaveAll");
+            if (!Assistant.TryExecuteCommand("Tools.BlitzSearchThis"))
             {
                 Assistant.MessageBox(@"Установите плагин Blitz Search.
 Перейдите по ссылке https://github.com/Natestah/BlitzSearch и установите приложение из релиза
 ");
-
                 return;
             }
 

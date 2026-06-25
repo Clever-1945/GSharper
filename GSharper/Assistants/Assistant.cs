@@ -113,6 +113,27 @@ namespace GSharper.Assistants
         {
             return _dte ?? (_dte = GetGlobalService<DTE2, DTE>());
         }
+        
+        /// <summary>
+        /// Попытаться выполнить команду Visual Studio
+        /// </summary>
+        /// <param name="commandName"></param>
+        /// <param name="commandArgs"></param>
+        /// <param name="error"></param>
+        /// <returns></returns>
+        public static bool TryExecuteCommand(string commandName, string commandArgs = "", Action<Exception> error = null)
+        {
+            try
+            {
+                Assistant.GetDte().ExecuteCommand(commandName, commandArgs);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                error?.Invoke(ex);
+                return false;
+            }
+        }
 
         public static IComponentModel GetComponentModel()
         {

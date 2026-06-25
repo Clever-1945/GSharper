@@ -1,0 +1,41 @@
+name: Build and Release VSIX
+
+on:
+  push:
+    branches:
+      - main # Запуск при любом изменении в ветке main
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Setup NuGet
+      uses: NuGet/setup-nuget@v1
+
+    - name: Restore NuGet Packages
+      run: nuget restore GSharper.slnx
+
+    - name: Build Extension
+      run: msbuild GSharper.slnx /p:Configuration=Release /p:DeployExtension=false
+
+    - name: Create GitHub Release
+      id: create_release
+      uses: softprops/action-gh-release@v2
+      with:
+        # Автоматически создаем уникальный тег на основе номера сборки
+        tag_name: build-${{ github.run_number }}
+        name: "Авто-релиз #${{ github.run_number }}"
+        body: |
+          Автоматическая сборка из ветки main.
+          Коммит: ${{ github.sha }}
+        files: |
+          **/*.vsix
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

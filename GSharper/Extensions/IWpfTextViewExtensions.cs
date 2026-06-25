@@ -1,4 +1,10 @@
-﻿using Microsoft.VisualStudio.Text.Editor;
+﻿using GSharper.Assistants;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Text;
+using Microsoft.VisualStudio.LanguageServices;
+using Microsoft.VisualStudio.Text;
+using Microsoft.VisualStudio.Text.Editor;
+using Microsoft.VisualStudio.TextManager.Interop;
 
 namespace GSharper.Extensions
 {
@@ -19,6 +25,18 @@ namespace GSharper.Extensions
                 return wpfTextView.Selection.StreamSelectionSpan.GetText();
             }
             return string.Empty;
+        }
+
+        /// <summary> Получить документ от текстового представления </summary>
+        /// <param name="textView"></param>
+        /// <returns></returns>
+        public static Document GetDocument(this IWpfTextView textView)
+        {
+            SnapshotPoint caretPoint = textView.Caret.Position.BufferPosition;
+            int position = caretPoint.Position;
+
+            var document = caretPoint.Snapshot.GetOpenDocumentInCurrentContextWithChanges();
+            return document;
         }
     }
 }

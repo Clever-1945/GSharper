@@ -1,11 +1,9 @@
 ﻿using GSharper.Assistants;
-using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using System;
-using System.ComponentModel.Design;
+using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace GSharper.Commands
 {
@@ -14,6 +12,44 @@ namespace GSharper.Commands
     /// </summary>
     public class TriggerChangeStateCommentCommand : GSharperCommandBase<TriggerChangeStateCommentCommand>
     {
+        public class CommentSymbols
+        {
+            public string Prefix;
+            public string Postfix;
+        }
+
+        private CommentSymbols GetCommentSymbols(ITextDocument document)
+        {
+            var extension = Path.GetExtension(document?.FilePath ?? "").ToLower();
+            switch(extension)
+            {
+                case ".xml":
+                case ".xaml":
+                case ".html":
+                    return new CommentSymbols()
+                    {
+                        Prefix = "<!--",
+                        Postfix = "-->"
+                    };
+                case ".cshtml":
+                    return new CommentSymbols()
+                    {
+                        Prefix = "@*",
+                        Postfix = "*@"
+                    };
+                case ".sql":
+                    return new CommentSymbols()
+                    {
+                        Prefix = "--",
+                    };
+            }
+
+            return new CommentSymbols()
+            {
+                Prefix = "//"
+            };
+        }
+
         /// <summary>
         /// Shows the tool window when the menu item is clicked.
         /// </summary>
@@ -56,45 +92,25 @@ namespace GSharper.Commands
 
             if (lines.Length < 1)
                 return;
-            
-            var commentPrefix = "//";
 
+            var commentSymbols = GetCommentSymbols(document);
             bool allLinesCommented = lines
-                .Where(line => !string.IsNullOrWhiteSpace(line.GetText()))
-                .All(line => line.GetText().TrimStart().StartsWith(commentPrefix));
+                 .Where(line => !string.IsNullOrWhiteSpace(line.GetText()))
+                 .All(line => 
+                 {
+                     var isPrefix = !String.IsNullOrWhiteSpace(commentSymbols.Prefix);
+                     var isCpmmentPrefix = !isPrefix || (isPrefix && line.GetText().TrimStart().StartsWith(commentSymbols.Prefix));
 
-            using (ITextEdit edit = snapshot.TextBuffer.CreateEdit())
-            {
-                if (allLinesCommented)
-                {
-                    foreach (var line in lines)
-                    {
-                        string text = line.GetText();
-                        int leadingSpacesCount = text.Length - text.TrimStart().Length;
-                        string trimmedText = text.TrimStart();
+                     var isPostfix = !String.IsNullOrWhiteSpace(commentSymbols.Postfix);
+                     var isCpmmentPostfix = !isPostfix || (isPostfix && line.GetText().TrimEnd().EndsWith(commentSymbols.Postfix));
 
-                        int charsToRemove = trimmedText.StartsWith(commentPrefix + " ") ? 3 : 2;
+                     return isCpmmentPrefix && isCpmmentPostfix;
+                 });
 
-                        int startPosition = line.Start + leadingSpacesCount;
-                        edit.Delete(startPosition, charsToRemove);
-                    }
-                }
-                else
-                {
-                    var leadingSpacesCount = lines
-                        .Select(x => x.GetText())
-                        .Select(text => text.Length - text.TrimStart().Length)
-                        .Min();
-
-                    foreach (var line in lines)
-                    {
-                        string text = line.GetText();
-                        edit.Insert(line.Start + leadingSpacesCount, commentPrefix + " ");
-                    }
-                }
-
-                edit.Apply();
-            }
+            if (allLinesCommented)
+                Assistant.TryExecuteCommand("Edit.UncommentSelection");
+            else
+                Assistant.TryExecuteCommand("Edit.CommentSelection");
         }
     }
 }
